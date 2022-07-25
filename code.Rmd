@@ -1,0 +1,143 @@
+---
+title: "Carnivores"
+output: html_document
+date: '2022-07-20'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Loading the data
+```{r}
+speciesE <- read.delim("speciesE.txt", header=T)
+extinct_large_mammals <- read.delim("extinct_large_mammals.txt", header=F)
+extant_large_mammals <- read.delim("extant_large_mammals.txt", header=F)
+```
+
+
+##check for missing species
+```{r}
+
+extant <- match(speciesE$species, extant_large_mammals$V1)
+extinct <- match(speciesE$species, extinct_large_mammals$V1)
+which(is.na(extant)&(is.na(extinct))) #check for double NAs
+
+cbind (extant, extinct) #check for double NAs
+match(speciesE$species, extant_large_mammals$V1)
+
+c
+speciesE$species[w] # all here
+
+```
+
+
+
+
+
+#data massage
+```{r cars}
+
+#a loop to split the genus from family
+speciesH <- array()
+s <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')
+
+  for (i in 1:nrow (X_helbstab_journal_pone_0261185_s005)) {
+  speciesH[i] = paste(s[[i]][1], s[[i]][2])
+ }
+
+#X_helbstab_journal_pone_0261185_s005$species1 <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')[[1]][1]
+
+#Count the common species with Heldstab
+sum(names(table(speciesH)) %in% names(table(species$V1)))
+
+sum(names(table(speciesE$species)) %in% names(table(extinct_large_mammals)))  #count common species between ecoreg and Extinct list = 19
+sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #count common species between ecoreg and Extant list = 95
+
+#match extant species in the dataset and mark them with 0 and 1
+
+m <- match(speciesE$species, extant_large_mammals$V1)
+speciesE$extant <- m
+speciesE$extant[!is.na(speciesE$extant)] <- 1
+speciesE$extant[is.na(speciesE$extant)] <- 0
+
+#get the brains
+m1 <- match(speciesE$species, speciesH)
+speciesE$brain <- X_helbstab_journal_pone_0261185_s005$`Log ECV`[m1]
+speciesE$EQ <- X_helbstab_journal_pone_0261185_s005$`Encephalization quotient (EQ)`[m1]
+write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+```
+
+#misingness (and imputation)
+```{r}
+require(naniar)
+
+gg_miss_var(speciesE)
+
+```
+
+
+#gls and phyloglm
+```{r}
+require(phytools)
+require(phylolm)
+require(mulTree)
+tree <- read.newick("spcs.nwk")
+rownames(speciesE2) <- speciesE2$species_
+clean.data(speciesE, tree)
+
+#a <- glm(speciesE$extant ~ speciesE$brain, family = binomial)
+a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
+aa <- phyloglm(extant ~ EQ, speciesE, tree, method = c("logistic_MPLE"))
+summary(a)
+summary(aa)
+
+```
+
+#paste(df[,'col'], df[,'col2'])
+
+rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
+pc <- princomp(na.omit(data))
+pc_noonan <- pc$scores[,1]
+names(pc_noonan) <- rownames(pc$scores)
+speciesE2 <- speciesE2[1:114,]
+
+#speciesE2 <- cbind(speciesE,NA)
+#speciesE2[,35] <- NA
+#w_noonan = which(names(pc_noonan) %in% speciesE2$species)
+#w_our = which(speciesE2$species %in% names(pc_noonan))
+#speciesE2[w_our, 35] = pc_noonan[w_noonan]
+
+w <- match(speciesE2$species, names(pc_noonan))
+speciesE2$PC <- pc_noonan[w]
+
+
+## Including Plots
+pure carn
+invert carn
+frug carn
+frug invert
+browser (prim)
+
+name=array
+name[which(diet.1 == 'carnivore' & is.na('diet.2'))] == 1
+diet from lit for missing species (scat or smth reliable)
+
+###############3
+
+
+species -> register
+register <- sample
+registerX$species_full <- trimws(registerX$species_full, which = c("right"))
+
+
+rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
+
+
+
+for (i in nos){
+    w = which(registerX[,'sample.no'] == i)
+    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
+}
+
+
