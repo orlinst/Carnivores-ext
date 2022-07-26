@@ -1,0 +1,6 @@
+t - terrestrial
+sa - semiaquatic
+sf - semifossorial
+sc - scansorial
+sr - semiarboreal
+a - arboreal
