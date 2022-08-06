@@ -11,32 +11,52 @@ knitr::opts_chunk$set(echo = TRUE)
 #Loading the data
 ```{r}
 speciesE <- read.delim("speciesE.txt", header=T)
+
+
+#defining var class
+speciesE$diet.1 <- as.factor(speciesE$diet.1)
+speciesE$extant <- as.factor(speciesE$extant)
+speciesE$loctype <- as.factor(speciesE$loctype)
+
+
+#remove NA level from diet
+data1$diet.1 <- factor(data1$diet.1, exclude="")
+```
+
+##Marking extinct vs extant
+```{r}
 extinct_large_mammals <- read.delim("extinct_large_mammals.txt", header=F)
 extant_large_mammals <- read.delim("extant_large_mammals.txt", header=F)
-```
 
-
-##check for missing species
-```{r}
-
+#check for missing species
 extant <- match(speciesE$species, extant_large_mammals$V1)
 extinct <- match(speciesE$species, extinct_large_mammals$V1)
+
+sum(names(table(speciesE$species)) %in% names(table(extinct_large_mammals)))  #count common species between ecoreg and Extinct list = 19
+sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #count common species between ecoreg and Extant list = 95
+
 which(is.na(extant)&(is.na(extinct))) #check for double NAs
+check <- cbind (extant, extinct) #check for double NAs
 
-cbind (extant, extinct) #check for double NAs
-match(speciesE$species, extant_large_mammals$V1)
+#match extant species in the dataset and mark them with 0 = extinct and 1 = extant
 
-c
-speciesE$species[w] # all here
+m <- match(speciesE$species, extant_large_mammals$V1)
+speciesE$extant <- m
+speciesE$extant[!is.na(speciesE$extant)] <- 1
+speciesE$extant[is.na(speciesE$extant)] <- 0
+
+
+
+#w <- match(speciesE$species, extant_large_mammals$V1)
+#speciesE$species[w]
 
 ```
 
 
-
-
-
-#data massage
+##Add data from other datasets
 ```{r cars}
+
+#HELBSTAB
 
 #a loop to split the genus from family
 speciesH <- array()
@@ -51,24 +71,52 @@ s <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')
 #Count the common species with Heldstab
 sum(names(table(speciesH)) %in% names(table(species$V1)))
 
-sum(names(table(speciesE$species)) %in% names(table(extinct_large_mammals)))  #count common species between ecoreg and Extinct list = 19
-sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #count common species between ecoreg and Extant list = 95
-
-#match extant species in the dataset and mark them with 0 and 1
-
-m <- match(speciesE$species, extant_large_mammals$V1)
-speciesE$extant <- m
-speciesE$extant[!is.na(speciesE$extant)] <- 1
-speciesE$extant[is.na(speciesE$extant)] <- 0
 
 #get the brains
 m1 <- match(speciesE$species, speciesH)
 speciesE$brain <- X_helbstab_journal_pone_0261185_s005$`Log ECV`[m1]
 speciesE$EQ <- X_helbstab_journal_pone_0261185_s005$`Encephalization quotient (EQ)`[m1]
+
 write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+
+
+#NOONAN PC
+
+
+#paste(df[,'col'], df[,'col2'])
+data <- noonan_tables1[, 5:15]
+rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
+pc <- princomp(na.omit(data))
+pc_noonan <- pc$scores[,1]
+names(pc_noonan) <- rownames(pc$scores)
+w <- match(speciesE$species, names(pc_noonan))
+speciesE$pc <- pc_noonan[w]
+speciesE <- speciesE2[1:114,]
+
+#speciesE2 <- cbind(speciesE,NA)
+#speciesE2[,35] <- NA
+#w_noonan = which(names(pc_noonan) %in% speciesE2$species)
+#w_our = which(speciesE2$species %in% names(pc_noonan))
+#speciesE2[w_our, 35] = pc_noonan[w_noonan]
+
+
+#BEN BMR
+
+#Adding BMR (from two diff columns same df)
+
+w <- match(speciesE$species, All_Carnivore_Species_BMRs$species_name) #match names
+w1 <- match(speciesE$species, All_Carnivore_Species_BMRs$synonym) #match synonyms
+speciesE$BMR <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w]
+speciesE$BMR1 <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w1]
+data$BMR[is.na(data$BMR)] = data$BMR1[!is.na(data$BMR1)]
+
 ```
 
-#misingness (and imputation)
+
+VAR TYPES AND REMOVE LEVELS!
+
+
+#Misingness (and imputation)
 ```{r}
 require(naniar)
 
@@ -77,13 +125,14 @@ gg_miss_var(speciesE)
 ```
 
 
-#gls and phyloglm
+#Analysia - gls;phyloglm;rstanarm
 ```{r}
 require(phytools)
 require(phylolm)
 require(mulTree)
-tree <- read.newick("spcs.nwk")
-rownames(speciesE2) <- speciesE2$species_
+require(rstanarm)
+
+rownames(speciesE) <- speciesE$species_
 clean.data(speciesE, tree)
 
 #a <- glm(speciesE$extant ~ speciesE$brain, family = binomial)
@@ -92,36 +141,117 @@ aa <- phyloglm(extant ~ EQ, speciesE, tree, method = c("logistic_MPLE"))
 summary(a)
 summary(aa)
 
+
+#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
+
+#timetree phy
+tree <- read.newick("spcs.nwk")
+rownames(speciesE) <- speciesE$species_
+clean.data(speciesE, tree)
+
+
+aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
+aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
+aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
+aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
+
+#phylacine phy
+treeF <- read.nexus("Complete_phylogeny.nex")
+rownames(speciesE) <- speciesE$species_
+clean <- clean.data(speciesE, treeF)
+tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
+
+
+phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
+phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
+
+
+
+#rstanarm
+
+fit_rstanarm <- stan_glm(
+    extant ~ loctype,
+    data = speciesE,
+    family = "binomial"
+)
+
+summary (fit_rstanarm)
+
+
+#some desc graphs
+
+require(lattice)
+dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
 ```
 
-#paste(df[,'col'], df[,'col2'])
-
-rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
-pc <- princomp(na.omit(data))
-pc_noonan <- pc$scores[,1]
-names(pc_noonan) <- rownames(pc$scores)
-speciesE2 <- speciesE2[1:114,]
-
-#speciesE2 <- cbind(speciesE,NA)
-#speciesE2[,35] <- NA
-#w_noonan = which(names(pc_noonan) %in% speciesE2$species)
-#w_our = which(speciesE2$species %in% names(pc_noonan))
-#speciesE2[w_our, 35] = pc_noonan[w_noonan]
-
-w <- match(speciesE2$species, names(pc_noonan))
-speciesE2$PC <- pc_noonan[w]
 
 
-## Including Plots
+#Diet re-cat
+```{r}
+
 pure carn
 invert carn
 frug carn
 frug invert
 browser (prim)
 
-name=array
-name[which(diet.1 == 'carnivore' & is.na('diet.2'))] == 1
-diet from lit for missing species (scat or smth reliable)
+speciesE1 <- speciesE
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "carnivore") & (speciesE$diet.2 == ""), "carnivore","")
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "invertivore") & (speciesE$diet.2 == ""), "invertivore",speciesE1$diet.new)
+#speciesE1$diet.new <- ifelse((speciesE$diet.1 == "browser") & (speciesE$diet.2 == ""), "browser",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "browser"), "browser",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "frugivore") & (speciesE$diet.2 == ""), "frugivore",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "piscivore"), "piscivore",speciesE1$diet.new)
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "invertivore") & (speciesE1$diet.2 == "carnivore"), "carninvert", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "invertivore"), "carninvert", speciesE1$diet.new)
+
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "frugivore"), "carnifrug", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "granivore"), "carnifrug", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "invertivore") & (speciesE1$diet.2 == "frugivore"), "invertivore", speciesE1$diet.new)
+
+
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "frugivore") & (speciesE1$diet.2 == "carnivore"), "frugcarn", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "frugivore") & (speciesE1$diet.2 == "invertivore"), "frugivore", speciesE1$diet.new)
+
+speciesE$diet.new <- speciesE1$diet.new
+
+
+```
+
+
+
+
+```{r}
+data <- as.data.frame(speciesE$extant)
+rownames(data) <- speciesE$species_
+data$loc <- speciesE$loctype
+data$loc <- as.factor(data$loc)
+data$data <- as.factor(data$data)
+
+require(ggtree)
+require(ggplot)
+
+
+circ <- ggtree(tree, layout = "circular")
+p1 <- gheatmap(circ, data11, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) +
+    scale_fill_viridis_d(option="D", name="discrete\nvalue") + geom_tippoint(aes(color = c("a", "b")))
+
+p2 <- ggplot(data11, aes(x=diet, y=tree1$tip.label)) + 
+    geom_tile(aes(fill=`clean$data$extant`)) + scale_fill_viridis_d() + 
+    theme_minimal() + xlab(NULL) + ylab(NULL)
+
+#+ geom_tippoint(aes(color = c("a", "b")))
+
+
+circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
+g <- ggtree(tree1) + geom_tiplab(align=TRUE) + hexpand(.5)
+p1 <- gheatmap(circ, data1[,21:22], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
+grep("robustus", b, value = TRUE)
+```
 
 ###############3
 
