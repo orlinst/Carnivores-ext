@@ -20,7 +20,7 @@ speciesE$loctype <- as.factor(speciesE$loctype)
 
 
 #remove NA level from diet
-data1$diet.1 <- factor(data1$diet.1, exclude="")
+speciesE$diet.1 <- factor(speciesE$diet.1, exclude="")
 ```
 
 ##Marking extinct vs extant
@@ -110,6 +110,12 @@ speciesE$BMR <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w]
 speciesE$BMR1 <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w1]
 data$BMR[is.na(data$BMR)] = data$BMR1[!is.na(data$BMR1)]
 
+
+#Wrangle and investigate
+require(easystats)
+describe_distribution(data1)
+data_filter(data1, extant == 0 & is.na(diet.new))
+
 ```
 
 
@@ -160,7 +166,9 @@ treeF <- read.nexus("Complete_phylogeny.nex")
 rownames(speciesE) <- speciesE$species_
 clean <- clean.data(speciesE, treeF)
 tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
-
+data1 <- clean$data
+data1$diet.new <- as.factor(data1$diet.new)
+data1$diet.new <- factor(data1$diet.new, exclude="")
 
 phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
 phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
@@ -250,6 +258,8 @@ p2 <- ggplot(data11, aes(x=diet, y=tree1$tip.label)) +
 circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
 g <- ggtree(tree1) + geom_tiplab(align=TRUE) + hexpand(.5)
 p1 <- gheatmap(circ, data1[,21:22], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
+
+
 grep("robustus", b, value = TRUE)
 ```
 
@@ -271,3 +281,48 @@ for (i in nos){
 }
 
 
+DIETS PLOT
+```{r}
+s2 = read.delim('/Users/alroy/Data/all_scats.txt')
+s2[is.na(s2)] = 0
+s2 = s2[,33:54]
+s2 = t(t(s2) / colSums(s2))
+
+s = read.delim('/Users/alroy/Data/all_scats.txt')
+sp = paste(s[,29],s[,30])
+s = s[,33:54]
+s[is.na(s)] = 0
+s = s / rowSums(s)
+
+d = matrix(nrow=nrow(s),ncol=6,dimnames=list(sp,c('vert','invert','frug','plant','aquatic','fungus')))
+
+d[,1] = rowSums(s[,1:4])
+d[,2] = rowSums(s[,7:12])
+d[,3] = rowSums(s[,14:17])
+d[,4] = rowSums(s[,18:20])
+d[,5] = rowSums(s[,c(5,6,13)])
+d[,6] = rowSums(s[,21:22])
+
+plot(hclust(dist(d)),labels=sp,cex=0.5)
+
+k = kmeans(d,centers=5)$clust
+
+sort(k)
+
+v = array()
+
+for (i in 1:20)	{
+	v[i] = (kmeans(d,centers=i)$tot.withinss / kmeans(d,centers=i)$totss)
+}
+
+plot(v,type='l')
+
+
+barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
+vert invert frug plant aquatic fungus
+
+ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
+
+
+
+```
