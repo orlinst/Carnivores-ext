@@ -84,14 +84,14 @@ write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 
 
 #paste(df[,'col'], df[,'col2'])
-data <- noonan_tables1[, 5:15]
+data <- noonan_tables1[, 5:15] #activity
 rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
 pc <- princomp(na.omit(data))
 pc_noonan <- pc$scores[,1]
 names(pc_noonan) <- rownames(pc$scores)
 w <- match(speciesE$species, names(pc_noonan))
 speciesE$pc <- pc_noonan[w]
-speciesE <- speciesE2[1:114,]
+#speciesE <- speciesE2[1:114,]
 
 #speciesE2 <- cbind(speciesE,NA)
 #speciesE2[,35] <- NA
@@ -323,6 +323,9 @@ plot(v,type='l')
 
 barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
 
+
+
+#add to main datatset
 dc.match <- match(speciesE$species, names(k))
 speciesE$diet.cat <- k1$k[dc.match]
 
@@ -356,7 +359,14 @@ speciesE$shannon <- scat.species$shannon[scat.match]
 speciesE$simpson <- scat.species$simpson[scat.match]
 
 
-#write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+require(SYNCSA)
+scat.species$shannon <- NULL
+scat.species$simpson <- NULL
+r1 <- rao.diversity(scat.species)
+speciesE$raoS <- r1$Simpson[scat.match]
+
+
+write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 
 
 
