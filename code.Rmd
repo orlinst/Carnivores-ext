@@ -282,13 +282,15 @@ for (i in nos){
 
 
 DIETS PLOT
+
+#Scat
 ```{r}
-s2 = read.delim('/Users/alroy/Data/all_scats.txt')
+s2 = read.delim('all_scats.txt')
 s2[is.na(s2)] = 0
 s2 = s2[,33:54]
 s2 = t(t(s2) / colSums(s2))
 
-s = read.delim('/Users/alroy/Data/all_scats.txt')
+s = read.delim('all_scats.txt')
 sp = paste(s[,29],s[,30])
 s = s[,33:54]
 s[is.na(s)] = 0
@@ -319,10 +321,76 @@ plot(v,type='l')
 
 
 barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
+
+#Indeces
+require(vegan)
+
+
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+
+for (i in 1:length(s2$species))	{
+    assign(paste0("n",i), as.numeric(scat[i,1:22]))
+}
+
+for (i in 1:length(s2$species))	{
+     scat$shannon[i] <- diversity(get(paste0("n",i)), index = "shannon")
+}
+
+for (i in 1:length(s2$species))	{
+     scat$simpson[i] <- diversity(get(paste0("n",i)), index = "simpson")
+}
+
+rm(list=ls(pattern="n"))
+
+
+scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+speciesE$shannon <- scat.species$shannon[scat.match]
+speciesE$simpson <- scat.species$simpson[scat.match]
+
+
+#scat$sums <- rowSums(scat[1:22])
+
+
+-----------------------------
+#manual calc
+
+#n = pop
+#N = sum(row)
+
+for (i in 1:length(s2$species))	{
+    assign(paste0("n",i), as.numeric(scat[i,1:22]))
+}
+
+N = rowSums(scat[1:22])
+
+
+#p = n/N
+for (i in 1:length(s2$species))	{
+    assign(paste0("p",i),  get(paste0("n",i))/N[i])
+}
+  
+
+for (i in 1:length(s2$species))	{
+    scat$shannon[i,] <- diversity(get(paste0("n",i)))
+}
+
+H = -sum(p*log(p))  
+
+rm(list=ls(pattern="n"))
+
+------------------------------------
+
+
+```
+
+
+
 vert invert frug plant aquatic fungus
 
 ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
 
-
+Phylogeny
 
 ```
