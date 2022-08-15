@@ -167,6 +167,7 @@ rownames(speciesE) <- speciesE$species_
 clean <- clean.data(speciesE, treeF)
 tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
 data1 <- clean$data
+
 data1$diet.new <- as.factor(data1$diet.new)
 data1$diet.new <- factor(data1$diet.new, exclude="")
 
@@ -322,6 +323,9 @@ plot(v,type='l')
 
 barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
 
+dc.match <- match(speciesE$species, names(k))
+speciesE$diet.cat <- k1$k[dc.match]
+
 #Indeces
 require(vegan)
 
@@ -346,11 +350,20 @@ rm(list=ls(pattern="n"))
 
 
 scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+
+scat.match <- match(speciesE$species, scat.species$species)
 speciesE$shannon <- scat.species$shannon[scat.match]
 speciesE$simpson <- scat.species$simpson[scat.match]
 
 
+#write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+
+
+
 #scat$sums <- rowSums(scat[1:22])
+
+
+#We only have diet on 2 extinct species: Martes caurina AND Felis lybica
 
 
 -----------------------------
