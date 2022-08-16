@@ -169,12 +169,48 @@ gg_miss_var(speciesE)
 #Tree
 ```{r}
 require(phytools)
+require(BAMMtools)
+
 
 treeF <- read.nexus("Complete_phylogeny.nex")
 rownames(speciesE) <- speciesE$species_
 
 
-#adding missing species loop (better solution underneath!)
+#Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) 
+
+
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_chinga"
+sister2 <- "Conepatus_leuconotus" 
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=getmrca(tree[[i]], sister, sister2),
+    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sister, sister2)])) 
+
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) }
+
+
+grep("Martes", tree[[7]]$tip.label, value = TRUE)
+
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
+data1 <- clean$data
+
+
+#adding missing species loop (bad solution with tree extraction!)
 
 #extract all trees
 treeNew <- list()
@@ -218,44 +254,6 @@ treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("tre
 
 
 rm(list=ls(pattern="treeX"))
-
-
-
-
-#BETTER OPTION
-
-for (i in 1:length(tree))	{
-tip <- "Martes_caurina"
-sister <- "Martes_americana"
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
-    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) 
-
-
-tip <- "Conepatus_robustus"
-sister <- "Conepatus_leuconotus"
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
-    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) 
-
-tip <- "Felis_lybica"
-sister <- "Felis_silvestris"
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
-    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) }
-
-
-grep("Martes", tree[[7]]$tip.label, value = TRUE)
-
-
-clean <- clean.data(speciesE, tree)
-tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
-data1 <- clean$data
-
-
 ```
 
 
