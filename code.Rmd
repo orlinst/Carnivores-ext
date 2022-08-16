@@ -18,10 +18,12 @@ rownames(speciesE) <- speciesE$species_
 speciesE$diet.1 <- as.factor(speciesE$diet.1)
 speciesE$extant <- as.factor(speciesE$extant)
 speciesE$loctype <- as.factor(speciesE$loctype)
+speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 
 
 #remove NA level from diet
 speciesE$diet.1 <- factor(speciesE$diet.1, exclude="")
+speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
 ```
 
 ##Marking extinct vs extant
@@ -164,10 +166,102 @@ gg_miss_var(speciesE)
 
 ```
 
+#Tree
+```{r}
+require(phytools)
+
+treeF <- read.nexus("Complete_phylogeny.nex")
+rownames(speciesE) <- speciesE$species_
+
+
+#adding missing species loop (better solution underneath!)
+
+#extract all trees
+treeNew <- list()
+class(treeNew) <- "multiPhylo"
+
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), tree[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+    
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+
+for (i in 1:length(tree))	{
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_leuconotus"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+
+rm(list=ls(pattern="treeX"))
+
+
+
+
+#BETTER OPTION
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) 
+
+
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_leuconotus"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) 
+
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) }
+
+
+grep("Martes", tree[[7]]$tip.label, value = TRUE)
+
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
+data1 <- clean$data
+
+
+```
+
 
 #Analyses - gls;phyloglm;rstanarm
 ```{r}
-require(phytools)
+
 require(phylolm)
 require(mulTree)
 require(rstanarm)
