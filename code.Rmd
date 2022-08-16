@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #Loading the data
 ```{r}
 speciesE <- read.delim("speciesE.txt", header=T)
+rownames(speciesE) <- speciesE$species_
 
 
 #defining var class
@@ -46,10 +47,6 @@ speciesE$extant[!is.na(speciesE$extant)] <- 1
 speciesE$extant[is.na(speciesE$extant)] <- 0
 
 
-
-#w <- match(speciesE$species, extant_large_mammals$V1)
-#speciesE$species[w]
-
 ```
 
 
@@ -57,8 +54,10 @@ speciesE$extant[is.na(speciesE$extant)] <- 0
 ```{r cars}
 
 #HELBSTAB
+-------------------------------------
+  
 
-#a loop to split the genus from family
+#Split the genus from family
 speciesH <- array()
 s <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')
 
@@ -77,14 +76,15 @@ m1 <- match(speciesE$species, speciesH)
 speciesE$brain <- X_helbstab_journal_pone_0261185_s005$`Log ECV`[m1]
 speciesE$EQ <- X_helbstab_journal_pone_0261185_s005$`Encephalization quotient (EQ)`[m1]
 
+#write to main data set
 write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 
 
-#NOONAN PC
+#NOONAN PC and Litter Size
+-----------------------------------
 
-
-#paste(df[,'col'], df[,'col2'])
-data <- noonan_tables1[, 5:15] #activity
+noonan_tables1 <- as.data.frame(noonan_tables1)
+data <- noonan_tables1[, 5:15] #activity vars
 rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
 pc <- princomp(na.omit(data))
 pc_noonan <- pc$scores[,1]
@@ -93,14 +93,9 @@ w <- match(speciesE$species, names(pc_noonan))
 speciesE$pc <- pc_noonan[w]
 #speciesE <- speciesE2[1:114,]
 
-#speciesE2 <- cbind(speciesE,NA)
-#speciesE2[,35] <- NA
-#w_noonan = which(names(pc_noonan) %in% speciesE2$species)
-#w_our = which(speciesE2$species %in% names(pc_noonan))
-#speciesE2[w_our, 35] = pc_noonan[w_noonan]
-
 
 #BEN BMR
+--------------------------------------
 
 #Adding BMR (from two diff columns same df)
 
@@ -108,101 +103,18 @@ w <- match(speciesE$species, All_Carnivore_Species_BMRs$species_name) #match nam
 w1 <- match(speciesE$species, All_Carnivore_Species_BMRs$synonym) #match synonyms
 speciesE$BMR <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w]
 speciesE$BMR1 <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w1]
-data$BMR[is.na(data$BMR)] = data$BMR1[!is.na(data$BMR1)]
-
-
-#Wrangle and investigate
-require(easystats)
-describe_distribution(data1)
-data_filter(data1, extant == 0 & is.na(diet.new))
+speciesE$BMR[is.na(speciesE$BMR)] = data$BMR1[!is.na(speciesE$BMR1)]
 
 ```
 
-
-VAR TYPES AND REMOVE LEVELS!
-
-
-#Misingness (and imputation)
-```{r}
-require(naniar)
-
-gg_miss_var(speciesE)
-
-```
-
-
-#Analysia - gls;phyloglm;rstanarm
-```{r}
-require(phytools)
-require(phylolm)
-require(mulTree)
-require(rstanarm)
-
-rownames(speciesE) <- speciesE$species_
-clean.data(speciesE, tree)
-
-#a <- glm(speciesE$extant ~ speciesE$brain, family = binomial)
-a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
-aa <- phyloglm(extant ~ EQ, speciesE, tree, method = c("logistic_MPLE"))
-summary(a)
-summary(aa)
-
-
-#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
-
-#timetree phy
-tree <- read.newick("spcs.nwk")
-rownames(speciesE) <- speciesE$species_
-clean.data(speciesE, tree)
-
-
-aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
-aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
-aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
-aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
-
-#phylacine phy
-treeF <- read.nexus("Complete_phylogeny.nex")
-rownames(speciesE) <- speciesE$species_
-clean <- clean.data(speciesE, treeF)
-tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
-data1 <- clean$data
-
-data1$diet.new <- as.factor(data1$diet.new)
-data1$diet.new <- factor(data1$diet.new, exclude="")
-
-phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
-phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
-
-
-
-#rstanarm
-
-fit_rstanarm <- stan_glm(
-    extant ~ loctype,
-    data = speciesE,
-    family = "binomial"
-)
-
-summary (fit_rstanarm)
-
-
-#some desc graphs
-
-require(lattice)
-dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
-```
-
-
-
-#Diet re-cat
+##Diet re-cat
 ```{r}
 
-pure carn
-invert carn
-frug carn
-frug invert
-browser (prim)
+#pure carn
+#invert carn
+#frug carn
+#frug invert
+#browser primary
 
 speciesE1 <- speciesE
 speciesE1$diet.new <- ifelse((speciesE$diet.1 == "carnivore") & (speciesE$diet.2 == ""), "carnivore","")
@@ -231,8 +143,80 @@ speciesE$diet.new <- speciesE1$diet.new
 ```
 
 
+#Wrangle, explore and investigate
+```{r}
+require(easystats)
+describe_distribution(speciesE)
+data_filter(data1, extant == 0 & is.na(diet.new))
 
 
+require(lattice)
+dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
+```
+
+
+#Misingness (and imputation)
+```{r}
+require(naniar)
+require(mice)
+
+gg_miss_var(speciesE)
+
+```
+
+
+#Analyses - gls;phyloglm;rstanarm
+```{r}
+require(phytools)
+require(phylolm)
+require(mulTree)
+require(rstanarm)
+
+
+#Non-phylo gls
+a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
+summary(a)
+
+#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
+
+#timetree phy
+tree <- read.newick("spcs.nwk")
+clean.data(speciesE, tree)
+
+
+aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
+aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
+aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
+aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
+
+#phylacine phy
+treeF <- read.nexus("Complete_phylogeny.nex")
+rownames(speciesE) <- speciesE$species_
+clean <- clean.data(speciesE, treeF)
+tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
+data1 <- clean$data
+
+#check the diet var!
+#data1$diet.new <- as.factor(data1$diet.new)
+#data1$diet.new <- factor(data1$diet.new, exclude="")
+
+phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
+phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
+
+
+#rstanarm
+
+fit_rstanarm <- stan_glm(
+    extant ~ loctype,
+    data = speciesE,
+    family = "binomial"
+)
+
+summary (fit_rstanarm)
+```
+
+
+#Plots
 ```{r}
 data <- as.data.frame(speciesE$extant)
 rownames(data) <- speciesE$species_
@@ -264,27 +248,8 @@ p1 <- gheatmap(circ, data1[,21:22], offset=.8, width=.2,colnames_angle=95, colna
 grep("robustus", b, value = TRUE)
 ```
 
-###############3
 
-
-species -> register
-register <- sample
-registerX$species_full <- trimws(registerX$species_full, which = c("right"))
-
-
-rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
-
-
-
-for (i in nos){
-    w = which(registerX[,'sample.no'] == i)
-    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
-}
-
-
-DIETS PLOT
-
-#Scat
+#SCAT
 ```{r}
 s2 = read.delim('all_scats.txt')
 s2[is.na(s2)] = 0
@@ -324,45 +289,68 @@ plot(v,type='l')
 barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
 
 
-
 #add to main datatset
 dc.match <- match(speciesE$species, names(k))
 speciesE$diet.cat <- k1$k[dc.match]
 
+
+#ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
+
+
 #Indeces
 require(vegan)
 
-
+s2 = read.delim('all_scats.txt')
 scat = s2[,33:54]
 scat[is.na(scat)] = 0
 scat$species <- paste(s2[,'genus'], s2[,'species'])
 
-for (i in 1:length(s2$species))	{
+
+#semi-manual with vegan
+for (i in 1:length(scat$species))	{
     assign(paste0("n",i), as.numeric(scat[i,1:22]))
 }
 
-for (i in 1:length(s2$species))	{
+for (i in 1:length(scat$species))	{
      scat$shannon[i] <- diversity(get(paste0("n",i)), index = "shannon")
 }
 
-for (i in 1:length(s2$species))	{
+for (i in 1:length(scat$species))	{
      scat$simpson[i] <- diversity(get(paste0("n",i)), index = "simpson")
 }
 
 rm(list=ls(pattern="n"))
 
 
-scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+#OR EASIER
 
-scat.match <- match(speciesE$species, scat.species$species)
+s2 = read.delim('all_scats.txt')
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+rownames(scat.species) <- scat.species$species
+scat.species$species <- NULL
+scat.species$shannon <- diversity(scat.species, index="shannon")
+scat.species$simpson <- diversity(scat.species, index="simpson")
+
+scat.match <- match(speciesE$species, row.names(scat.species))
 speciesE$shannon <- scat.species$shannon[scat.match]
 speciesE$simpson <- scat.species$simpson[scat.match]
 
+#s2 = read.delim('all_scats.txt')
+#scat = s2[,33:54]
+#scat[is.na(scat)] = 0
+#scat$species <- paste(s2[,'genus'], s2[,'species'])
 
+#Using SYNCSA for Rao's QE
 require(SYNCSA)
 scat.species$shannon <- NULL
 scat.species$simpson <- NULL
+rownames(scat.species) <- scat.species$species
+scat.species$species <- NULL
 r1 <- rao.diversity(scat.species)
+scat.match <- match(speciesE$species, rownames(scat.species))
 speciesE$raoS <- r1$Simpson[scat.match]
 
 
@@ -376,7 +364,7 @@ write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 #We only have diet on 2 extinct species: Martes caurina AND Felis lybica
 
 
------------------------------
+#-----------------------------
 #manual calc
 
 #n = pop
@@ -403,17 +391,28 @@ H = -sum(p*log(p))
 
 rm(list=ls(pattern="n"))
 
-------------------------------------
-
-
-```
-
-
-
-vert invert frug plant aquatic fungus
-
-ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
-
-Phylogeny
+#------------------------------------
 
 ```
+
+
+
+###############3
+
+
+species -> register
+register <- sample
+registerX$species_full <- trimws(registerX$species_full, which = c("right"))
+
+
+rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
+
+
+
+for (i in nos){
+    w = which(registerX[,'sample.no'] == i)
+    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
+}
+
+
+DIETS PLOT
