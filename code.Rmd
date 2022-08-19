@@ -273,6 +273,8 @@ p2 <-  gheatmap (p1, data[,c(26, 20, 29)], offset=-0.5, width=0.5, low="bisque",
 
 p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
 
+phylo.heatmap(tree,X,standardize=TRUE)
+
 ```
 
 #Analyses - gls;phyloglm;rstanarm
