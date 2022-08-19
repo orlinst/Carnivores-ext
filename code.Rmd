@@ -175,7 +175,6 @@ require(BAMMtools)
 treeF <- read.nexus("Complete_phylogeny.nex")
 rownames(speciesE) <- speciesE$species_
 
-
 #Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
 
 for (i in 1:length(tree))	{
@@ -256,6 +255,25 @@ treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("tre
 rm(list=ls(pattern="treeX"))
 ```
 
+
+#Load final tree and data
+```{r}
+tree1tree <- read.tree("CompletePhyCarn.txt")
+data <- read.delim("speciesE.txt", header=T)
+rownames(data) <- data$species_
+
+
+#plot using ggtree
+require(ggtree)
+p1 <- ggtree(tree1) + 
+    xlim(0, 150) +
+    geom_tiplab(size=4, offset = 35)
+
+p2 <-  gheatmap (p1, data[,c(26, 20, 29)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "gold2", "coral", "cyan3", "cyan4", "darkblue", "brown4"))
+
+p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
+
+```
 
 #Analyses - gls;phyloglm;rstanarm
 ```{r}
