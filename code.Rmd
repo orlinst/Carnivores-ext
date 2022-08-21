@@ -340,7 +340,7 @@ summary (fit_rstanarm)
 
 ```{r}
 
-print.pval <- function(x, digits = 4) {
+print.pval <- function(x, digits = 6) {
     sig_level <- cut(x,
                      breaks = c(-Inf, 0, 0.0001, 0.001, 0.01, 0.05, Inf),
                      labels = c("", "****", "***", "**", "*", ""))
@@ -348,34 +348,30 @@ print.pval <- function(x, digits = 4) {
     invisible(x)
 }
 
-
-regress <- function (multree, data, model, from, to) {
-    a = 0
+#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
+regress.multi <- function (multree, data, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
+    a = 0 #counter for sig models
+# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+# (see print.pval fun) and prints them - progress is displayed
 for (i in from:to){
     temptree <- multree[[i]]
-    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol=30)
-    s2 <- as.data.frame(summary(s1)$coefficients[,4])
+    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
     asd <- as.numeric(s2[[1]])
-  #    for (t in 1:length(s2[[1]]))  {
-  #     asd <- if(s2[[1]][t]<0.06){sprintf(">>>%f<<<", s2[[1]][t])}
-  #    }
-      if(any(asd<0.06)){print.pval(asd)} 
-      if(any(s2<0.06)){a = a+1
-      cat(asd,"\n", " N Sig models:", a, " out of", i-1, "", round((a/(to-from))*100, 2), "% " ,"\n")
-  
-      }
-     
-                  
+      if(any(asd<alpha)){
+        print.pval(asd[-1]) 
+        a = a+1
+        cat(asd,"\n", " N Sig models:", a, " out of", i-1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+        }
         #print(summary(s1)$coefficients[,4])
         #print (summary(s1))
                   }
-    cat(paste0("\n Predictors:"))
-    cat(paste0("\n", "", row.names(s2)[-1]), "\n")
-    cat(paste0("\n ==================== \n", " Total models ", to - from, "\n Significant ", a, "\n ", round((a/(to-from))*100, 2), "% ", "\n ==================== \n"))
-  
-                                                }
+    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
+    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models: ", to - from, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from))*100, 2), "% ", "\n ==================== \n"))
+    }
 
-regress(tree, data, extant ~ diet.new, 1, 12)
+regress.multi(tree, data, extant ~ diet.new, 1, 12)
 
 
                                     
