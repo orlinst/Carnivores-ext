@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #Loading the data
 ```{r}
 speciesE <- read.delim("speciesE.txt", header=T)
-rownames(speciesE) <- speciesE$species_
+rownames(speciesE) <- speciesE$species_name
 
 
 #defining var class
@@ -24,6 +24,7 @@ speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 #remove NA level from diet
 speciesE$diet.1 <- factor(speciesE$diet.1, exclude="")
 speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
+speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
 ```
 
 ##Marking extinct vs extant
@@ -181,7 +182,7 @@ require(phytools)
 require(BAMMtools)
 
 
-treeF <- read.nexus("Complete_phylogeny.nex")
+treeF <- read.tree("Complete_phylogeny.nex")
 rownames(speciesE) <- speciesE$species_
 
 #Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
@@ -217,7 +218,11 @@ clean <- clean.data(speciesE, tree)
 tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
 data1 <- clean$data
 
+```
 
+
+
+```{r}
 #adding missing species loop (bad solution with tree extraction!)
 
 #extract all trees
@@ -267,10 +272,11 @@ rm(list=ls(pattern="treeX"))
 
 #Load final tree and data
 ```{r}
+require(phytools)
 tree <- read.tree("CompletePhyCarn.txt")
-data <- read.delim("speciesE.txt", header=T)
+data <- speciesE
 #data <- speciesE
-rownames(data) <- data$species_
+rownames(data) <- data$species_name
 
 
 
@@ -279,17 +285,6 @@ require(wesanderson)
 pal <- wes_palette("Darjeeling1", 13, type = "continuous")
 
 
-#plot using ggtree
-require(ggtree)
-p1 <- ggtree(tree[[1]]) + 
-    xlim(0, 150) +
-    geom_tiplab(size=4, offset = 35)
-
-p2 <-  gheatmap (p1, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
-
-#p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
-
-#phylo.heatmap(tree,X,standardize=TRUE)
 
 ```
 
@@ -308,7 +303,7 @@ summary(a)
 #RELEVEL for ancova relevel(diet.1, ref = "carnivore")
 
 #timetree phy
-tree <- read.newick("spcs.nwk")
+tree2 <- read.newick("spcs.nwk")
 clean.data(speciesE, tree)
 
 
@@ -331,7 +326,6 @@ data1 <- clean$data
 phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
 phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
 
-
 #rstanarm
 
 fit_rstanarm <- stan_glm(
@@ -343,6 +337,49 @@ fit_rstanarm <- stan_glm(
 summary (fit_rstanarm)
 ```
 
+
+```{r}
+
+print.pval <- function(x, digits = 4) {
+    sig_level <- cut(x,
+                     breaks = c(-Inf, 0, 0.0001, 0.001, 0.01, 0.05, Inf),
+                     labels = c("", "****", "***", "**", "*", ""))
+    print(paste0(signif(x, digits = digits), sig_level), quote = FALSE)
+    invisible(x)
+}
+
+
+regress <- function (multree, data, model, from, to) {
+    a = 0
+for (i in from:to){
+    temptree <- multree[[i]]
+    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol=30)
+    s2 <- as.data.frame(summary(s1)$coefficients[,4])
+    asd <- as.numeric(s2[[1]])
+  #    for (t in 1:length(s2[[1]]))  {
+  #     asd <- if(s2[[1]][t]<0.06){sprintf(">>>%f<<<", s2[[1]][t])}
+  #    }
+      if(any(asd<0.06)){print.pval(asd)} 
+      if(any(s2<0.06)){a = a+1
+      cat(asd,"\n", " N Sig models:", a, " out of", i-1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+  
+      }
+     
+                  
+        #print(summary(s1)$coefficients[,4])
+        #print (summary(s1))
+                  }
+    cat(paste0("\n Predictors:"))
+    cat(paste0("\n", "", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models ", to - from, "\n Significant ", a, "\n ", round((a/(to-from))*100, 2), "% ", "\n ==================== \n"))
+  
+                                                }
+
+regress(tree, data, extant ~ diet.new, 1, 12)
+
+
+                                    
+```
 
 #Plots
 ```{r}
@@ -357,11 +394,11 @@ require(ggplot)
 
 
 circ <- ggtree(tree, layout = "circular")
-p1 <- gheatmap(circ, data11, offset=.8, width=.2,
+p1 <- gheatmap(circ, data, offset=.8, width=.2,
                colnames_angle=95, colnames_offset_y = .25) +
     scale_fill_viridis_d(option="D", name="discrete\nvalue") + geom_tippoint(aes(color = c("a", "b")))
 
-p2 <- ggplot(data11, aes(x=diet, y=tree1$tip.label)) + 
+p2 <- ggplot(data, aes(x=diet, y=tree1$tip.label)) + 
     geom_tile(aes(fill=`clean$data$extant`)) + scale_fill_viridis_d() + 
     theme_minimal() + xlab(NULL) + ylab(NULL)
 
@@ -370,10 +407,24 @@ p2 <- ggplot(data11, aes(x=diet, y=tree1$tip.label)) +
 
 circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
 g <- ggtree(tree1) + geom_tiplab(align=TRUE) + hexpand(.5)
-p1 <- gheatmap(circ, data1[,21:22], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
+p1 <- gheatmap(circ, data[,c("diet.1", "diet.cat", "diet.new")], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
 
 
 grep("robustus", b, value = TRUE)
+
+
+#heatmap using ggtree
+require(ggtree)
+p1 <- ggtree(tree[[1]]) + 
+    xlim(0, 150) +
+    geom_tiplab(size=4, offset = 35)
+
+p2 <-  gheatmap (p1, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
+
+#p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
+
+#phylo.heatmap(tree,X,standardize=TRUE)
+
 ```
 
 
@@ -543,4 +594,21 @@ for (i in nos){
 }
 
 
-DIETS PLOT
+
+
+
+
+change 0s to 0.00001s
+primatedata[which(primatedata[,14]==0, arr.ind=TRUE), 14] <- 0.00001
+
+
+put the new values in a dataframe
+
+df <- data.frame(x,y,z)
+
+
+
+
+
+
+
