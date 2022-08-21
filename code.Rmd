@@ -47,16 +47,14 @@ m <- match(speciesE$species, extant_large_mammals$V1)
 speciesE$extant <- m
 speciesE$extant[!is.na(speciesE$extant)] <- 1
 speciesE$extant[is.na(speciesE$extant)] <- 0
-
-
 ```
 
 
 ##Add data from other datasets
-```{r cars}
+```{r}
 
 #HELBSTAB
--------------------------------------
+#-------------------------------------
   
 
 #Split the genus from family
@@ -83,7 +81,7 @@ write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 
 
 #NOONAN PC and Litter Size
------------------------------------
+#-----------------------------------
 
 noonan_tables1 <- as.data.frame(noonan_tables1)
 data <- noonan_tables1[, 5:15] #activity vars
@@ -93,11 +91,13 @@ pc_noonan <- pc$scores[,1]
 names(pc_noonan) <- rownames(pc$scores)
 w <- match(speciesE$species, names(pc_noonan))
 speciesE$pc <- pc_noonan[w]
+
+#Also add litter size
 #speciesE <- speciesE2[1:114,]
 
 
 #BEN BMR
---------------------------------------
+#--------------------------------------
 
 #Adding BMR (from two diff columns same df)
 
@@ -148,7 +148,16 @@ speciesE$diet.new <- speciesE1$diet.new
 #Wrangle, explore and investigate
 ```{r}
 require(easystats)
+require(psych)
 describe_distribution(speciesE)
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+
+speciesE$Log.mass.g <- log(speciesE$mass.g)
+speciesE$Log.home.range <- log(speciesE$home.range)
+speciesE$Log.population.density <- log(speciesE$population.density)
+speciesE$Log.BMR <- log(speciesE$BMR)
+
+
 data_filter(data1, extant == 0 & is.na(diet.new))
 
 
@@ -258,22 +267,29 @@ rm(list=ls(pattern="treeX"))
 
 #Load final tree and data
 ```{r}
-tree1tree <- read.tree("CompletePhyCarn.txt")
+tree <- read.tree("CompletePhyCarn.txt")
 data <- read.delim("speciesE.txt", header=T)
+#data <- speciesE
 rownames(data) <- data$species_
+
+
+
+
+require(wesanderson)
+pal <- wes_palette("Darjeeling1", 13, type = "continuous")
 
 
 #plot using ggtree
 require(ggtree)
-p1 <- ggtree(tree1) + 
+p1 <- ggtree(tree[[1]]) + 
     xlim(0, 150) +
     geom_tiplab(size=4, offset = 35)
 
-p2 <-  gheatmap (p1, data[,c(26, 20, 29)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "gold2", "coral", "cyan3", "cyan4", "darkblue", "brown4"))
+p2 <-  gheatmap (p1, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
 
-p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
+#p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
 
-phylo.heatmap(tree,X,standardize=TRUE)
+#phylo.heatmap(tree,X,standardize=TRUE)
 
 ```
 
