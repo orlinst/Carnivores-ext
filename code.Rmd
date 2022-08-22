@@ -159,7 +159,7 @@ speciesE$Log.population.density <- log(speciesE$population.density)
 speciesE$Log.BMR <- log(speciesE$BMR)
 
 
-data_filter(data1, extant == 0 & is.na(diet.new))
+data_filter(speciesE, extant == 0 & is.na(diet.new))
 
 
 require(lattice)
@@ -176,7 +176,7 @@ gg_miss_var(speciesE)
 
 ```
 
-#Tree
+#Tree wrangle
 ```{r}
 require(phytools)
 require(BAMMtools)
@@ -221,7 +221,7 @@ data1 <- clean$data
 ```
 
 
-
+###*bad solution
 ```{r}
 #adding missing species loop (bad solution with tree extraction!)
 
@@ -274,17 +274,12 @@ rm(list=ls(pattern="treeX"))
 ```{r}
 require(phytools)
 tree <- read.tree("CompletePhyCarn.txt")
+
+
+#speciesE <- read.delim("speciesE.txt", header=T)
+#rownames(speciesE) <- speciesE$species_name
 data <- speciesE
-#data <- speciesE
 rownames(data) <- data$species_name
-
-
-
-
-require(wesanderson)
-pal <- wes_palette("Darjeeling1", 13, type = "continuous")
-
-
 
 ```
 
@@ -292,7 +287,6 @@ pal <- wes_palette("Darjeeling1", 13, type = "continuous")
 ```{r}
 
 require(phylolm)
-require(mulTree)
 require(rstanarm)
 
 
@@ -313,15 +307,17 @@ aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
 aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
 
 #phylacine phy
-treeF <- read.nexus("Complete_phylogeny.nex")
-rownames(speciesE) <- speciesE$species_
-clean <- clean.data(speciesE, treeF)
-tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
-data1 <- clean$data
+#treeF <- read.nexus("Complete_phylogeny.nex")
+#rownames(speciesE) <- speciesE$species_
+#clean <- clean.data(speciesE, treeF)
+#tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
+#data1 <- clean$data
 
 #check the diet var!
 #data1$diet.new <- as.factor(data1$diet.new)
 #data1$diet.new <- factor(data1$diet.new, exclude="")
+
+#USE THE MULTI.REGRESS
 
 phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
 phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
@@ -337,7 +333,7 @@ fit_rstanarm <- stan_glm(
 summary (fit_rstanarm)
 ```
 
-
+##Functions
 ```{r}
 
 print.pval <- function(x, digits = 6) {
@@ -361,7 +357,7 @@ for (i in from:to){
       if(any(asd<alpha)){
         print.pval(asd[-1]) 
         a = a+1
-        cat(asd,"\n", " N Sig models:", a, " out of", i-1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
         }
         #print(summary(s1)$coefficients[,4])
         #print (summary(s1))
@@ -379,23 +375,44 @@ regress.multi(tree, data, extant ~ diet.new, 1, 12)
 
 #Plots
 ```{r}
-data <- as.data.frame(speciesE$extant)
-rownames(data) <- speciesE$species_
-data$loc <- speciesE$loctype
-data$loc <- as.factor(data$loc)
-data$data <- as.factor(data$data)
+#choose cols to plot
+colnames(data)
+
+#Get them by number
+#nameCol <- data.frame(colnames(data))
+#cols <- nameCol[c(4,6,8),]
+
+#Get them by name
+cols <- c("loctype","diet.new", "extant")
+
+#Fetch only the desired columns in a new df and give it row names
+data1 <- speciesE[c(cols)]
+rownames(data1) <- speciesE$species_name
+
+#convert vars to what they need to be - factor, numeric etc (if need be)
+data1[cols] <- lapply(data1[cols], factor, exclude="")
+
+#check if it worked
+sapply(data1, class)
+
+#get 1 tree
+tree1 <- tree[[2]]
 
 require(ggtree)
-require(ggplot)
+require(ggplot2)
+require(wesanderson)
+
+pal <- wes_palette("Darjeeling1", 13, type = "continuous")
 
 
-circ <- ggtree(tree, layout = "circular")
-p1 <- gheatmap(circ, data, offset=.8, width=.2,
-               colnames_angle=95, colnames_offset_y = .25) +
-    scale_fill_viridis_d(option="D", name="discrete\nvalue") + geom_tippoint(aes(color = c("a", "b")))
+tree1 <- drop.tip(tree1, "Felis_catus")
 
-p2 <- ggplot(data, aes(x=diet, y=tree1$tip.label)) + 
-    geom_tile(aes(fill=`clean$data$extant`)) + scale_fill_viridis_d() + 
+circ <- ggtree(tree1, layout = "circular")
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue") #+ geom_tippoint(aes(color = c("a", "b")))
+
+#p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label)) + 
+    geom_tile(aes(fill=`extant`)) + scale_fill_viridis_d() + 
     theme_minimal() + xlab(NULL) + ylab(NULL)
 
 #+ geom_tippoint(aes(color = c("a", "b")))
@@ -403,21 +420,19 @@ p2 <- ggplot(data, aes(x=diet, y=tree1$tip.label)) +
 
 circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
 g <- ggtree(tree1) + geom_tiplab(align=TRUE) + hexpand(.5)
-p1 <- gheatmap(circ, data[,c("diet.1", "diet.cat", "diet.new")], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
+p1 <- gheatmap(circ, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
 
 
-grep("robustus", b, value = TRUE)
+#grep("robustus", b, value = TRUE)
 
 
 #heatmap using ggtree
-require(ggtree)
+
 p1 <- ggtree(tree[[1]]) + 
     xlim(0, 150) +
     geom_tiplab(size=4, offset = 35)
 
 p2 <-  gheatmap (p1, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
-
-#p2 <-  gheatmap (p1, data[,c(26, 20, 14)], offset=-0.5, width=0.5, low="bisque", high="darkred", colnames_position = "top", font.size=4) + scale_fill_manual(values=c("red", "black", "blue", "green", "yellow", "purple", "pink", "cyan", "brown", "coral"))
 
 #phylo.heatmap(tree,X,standardize=TRUE)
 
