@@ -159,7 +159,7 @@ speciesE$Log.population.density <- log(speciesE$population.density)
 speciesE$Log.BMR <- log(speciesE$BMR)
 
 
-data_filter(speciesE, extant == 0 & is.na(diet.new))
+data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors back with NA level to count it
 
 
 require(lattice)
@@ -275,11 +275,9 @@ rm(list=ls(pattern="treeX"))
 require(phytools)
 tree <- read.tree("CompletePhyCarn.txt")
 
-
-#speciesE <- read.delim("speciesE.txt", header=T)
-#rownames(speciesE) <- speciesE$species_name
-data <- speciesE
-rownames(data) <- data$species_name
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[1]]
+data <- clean$data
 
 ```
 
@@ -375,6 +373,12 @@ regress.multi(tree, data, extant ~ diet.new, 1, 12)
 
 #Plots
 ```{r}
+
+#clean <- clean.data(data, tree1)
+#tree1 <- clean$tree
+#data <- clean$data1
+
+
 #choose cols to plot
 colnames(data)
 
@@ -386,13 +390,13 @@ colnames(data)
 cols <- c("loctype","diet.new", "extant")
 
 #Fetch only the desired columns in a new df and give it row names
-data1 <- speciesE[c(cols)]
-rownames(data1) <- speciesE$species_name
+data1 <- data[c(cols)]
 
-#convert vars to what they need to be - factor, numeric etc (if need be)
+#convert vars to what they need to be - factor, numeric etc (if need be) (factors with NA level)
 data1[cols] <- lapply(data1[cols], factor, exclude="")
 
 #check if it worked
+levels(data1[,1])
 sapply(data1, class)
 
 #get 1 tree
@@ -402,25 +406,34 @@ require(ggtree)
 require(ggplot2)
 require(wesanderson)
 
-pal <- wes_palette("Darjeeling1", 13, type = "continuous")
+pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
 
 
-tree1 <- drop.tip(tree1, "Felis_catus")
+#tree1 <- drop.tip(tree1, "Felis_catus")
 
+
+#Circular tree with traits from data1
 circ <- ggtree(tree1, layout = "circular")
 p1 <- gheatmap(circ, data1, offset=.8, width=.2,
-               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue") #+ geom_tippoint(aes(color = c("a", "b")))
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
 
-#p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label)) + 
+#Visualise traits per cat
+p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label, width=.5)) + 
     geom_tile(aes(fill=`extant`)) + scale_fill_viridis_d() + 
     theme_minimal() + xlab(NULL) + ylab(NULL)
 
 #+ geom_tippoint(aes(color = c("a", "b")))
 
-
+#circ tree with offset
 circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
-g <- ggtree(tree1) + geom_tiplab(align=TRUE) + hexpand(.5)
-p1 <- gheatmap(circ, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25)
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
+
+#Tree with offset
+g <- ggtree(tree1) + geom_tiplab(align=TRUE, offset=15) + hexpand(.5)
+
+#Plot the heatmap
+p5 <- gheatmap(g, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25, colnames_position = "top")
 
 
 #grep("robustus", b, value = TRUE)
@@ -428,13 +441,17 @@ p1 <- gheatmap(circ, data[cols], offset=.8, width=.2,colnames_angle=95, colnames
 
 #heatmap using ggtree
 
-p1 <- ggtree(tree[[1]]) + 
+p11 <- ggtree(tree[[1]]) + 
     xlim(0, 150) +
     geom_tiplab(size=4, offset = 35)
 
-p2 <-  gheatmap (p1, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
+p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
 
 #phylo.heatmap(tree,X,standardize=TRUE)
+
+
+library(aplot)
+p21 %>% insert_left(p5) %>% insert_right(p1, width=.5) 
 
 ```
 
@@ -496,7 +513,7 @@ scat[is.na(scat)] = 0
 scat$species <- paste(s2[,'genus'], s2[,'species'])
 
 
-#semi-manual with vegan
+#semi-manual with vegan (skip)
 for (i in 1:length(scat$species))	{
     assign(paste0("n",i), as.numeric(scat[i,1:22]))
 }
