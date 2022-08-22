@@ -453,6 +453,36 @@ p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, 
 library(aplot)
 p21 %>% insert_left(p5) %>% insert_right(p1, width=.5) 
 
+
+
+
+library(ggridges)
+ggplot(speciesE, aes(x = brain, y = extant, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C")
+
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient(stat="binline") +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+
+speciesE %>%
+     mutate(diet.cat = factor(diet.cat)) %>%
+     ggplot() +
+     geom_boxplot(aes(x = diet.cat, y = log(mass.g)))
+
+ggplot(speciesE) + 
+    geom_density_ridges(aes(x = log(mass.g), y = diet.cat, group = interaction(diet.cat, extant),fill = extant), alpha = 0.7)
+
 ```
 
 
