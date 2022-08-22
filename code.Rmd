@@ -25,6 +25,13 @@ speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 speciesE$diet.1 <- factor(speciesE$diet.1, exclude="")
 speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
 speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
+
+#do we need these?
+speciesE$population.density <- NULL #too many missing
+speciesE$raoS <- NULL #same like simpson for now
+speciesE$IUCN.status <- NULL #do we need this?
+speciesE$mean.abundance <- NULL #should use median?
+speciesE$diet.1 <- NULL #recoded?
 ```
 
 ##Marking extinct vs extant
@@ -173,12 +180,13 @@ require(naniar)
 require(mice)
 
 gg_miss_var(speciesE)
+vis_miss(speciesE)
 
-
-imp <- mice(speciesE, 5)
+imp <- mice(speciesE, 5, maxit = 10)
 
 plot(imp)
-
+densityplot(imp)
+stripplot(imp, pch = 20, cex = 1.2)
 
 complete(imp, 2)
 ```
