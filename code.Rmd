@@ -10,28 +10,40 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #Loading the data
 ```{r}
+require(psych)
+
 speciesE <- read.delim("speciesE.txt", header=T)
 rownames(speciesE) <- speciesE$species_name
 
 
 #defining var class
-speciesE$diet.1 <- as.factor(speciesE$diet.1)
 speciesE$extant <- as.factor(speciesE$extant)
 speciesE$loctype <- as.factor(speciesE$loctype)
 speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 
 
 #remove NA level from diet
-speciesE$diet.1 <- factor(speciesE$diet.1, exclude="")
-speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
+#speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
 speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
 
+#Log vars
+require(VGAM)
+
+speciesE$simpson[23] <- NA
+speciesE$simpson[80] <- NA
+
+speciesE$mass.g <- log(speciesE$mass.g)
+speciesE$home.range <- log(speciesE$home.range)
+speciesE$BMR <- log(speciesE$BMR)
+speciesE$litter <- log(speciesE$litter)
+speciesE$median.abundance <- yeo.johnson(speciesE$median.abundance, lambda = 0.001) #transform Yeo–Johnson
+
+
 #do we need these?
-speciesE$population.density <- NULL #too many missing
-speciesE$raoS <- NULL #same like simpson for now
-speciesE$IUCN.status <- NULL #do we need this?
-speciesE$mean.abundance <- NULL #should use median?
-speciesE$diet.1 <- NULL #recoded?
+speciesE$mean.abundance <- NULL #should use median? - recode!
+
+
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
 ```
 
 ##Marking extinct vs extant
@@ -160,10 +172,6 @@ require(psych)
 describe_distribution(speciesE)
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
 
-speciesE$Log.mass.g <- log(speciesE$mass.g)
-speciesE$Log.home.range <- log(speciesE$home.range)
-speciesE$Log.population.density <- log(speciesE$population.density)
-speciesE$Log.BMR <- log(speciesE$BMR)
 
 
 data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors back with NA level to count it
@@ -179,10 +187,13 @@ dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
 require(naniar)
 require(mice)
 
+data$simpson[23] <- NA
+data$simpson[79] <- NA
+
 gg_miss_var(speciesE)
 vis_miss(speciesE)
 
-imp <- mice(speciesE, 5, maxit = 10)
+imp <- mice(data[,3:16], 6, maxit = 8)
 
 plot(imp)
 densityplot(imp)
@@ -288,6 +299,7 @@ rm(list=ls(pattern="treeX"))
 #Load final tree and data
 ```{r}
 require(phytools)
+require(mulTree)
 tree <- read.tree("CompletePhyCarn.txt")
 
 clean <- clean.data(speciesE, tree)
@@ -379,6 +391,8 @@ for (i in from:to){
     cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
     cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
     }
+
+require(phylolm)
 
 regress.multi(tree, data, extant ~ diet.new, 1, 12)
 
@@ -583,9 +597,16 @@ scat$species <- paste(s2[,'genus'], s2[,'species'])
 scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
 rownames(scat.species) <- scat.species$species
 scat.species$species <- NULL
-scat.species$shannon <- diversity(scat.species, index="shannon")
-scat.species$simpson <- diversity(scat.species, index="simpson")
+scat.species[,1:22] <- sapply(scat.species[,1:22],as.integer)
 
+sapply(scat.species, class)
+#scat.species <- as.data.frame(scat.species)
+
+scat.species$shannon <- diversity(scat.species, index="shannon") #calculate the indeces ONE BY ONE!
+scat.species$simpson <- rarefy(scat.species, 2) - 1 #unbiased simpson
+
+#scat.species$simpson <- diversity(scat.species, index="simpson")   #RAREFY! ,2) -1 (log)!!!!
+ 
 scat.match <- match(speciesE$species, row.names(scat.species))
 speciesE$shannon <- scat.species$shannon[scat.match]
 speciesE$simpson <- scat.species$simpson[scat.match]
@@ -681,7 +702,24 @@ df <- data.frame(x,y,z)
 
 
 
+```{r}
+library(phylopath)
+
+models <- define_model_set(
+    one   = c(mass.g ~ extant, brain ~ extant),
+    two = c(extant ~ mass.g, brain ~ mass.g),
+    #three   = c(extant ~ brain, brain ~ mass.g),
+    #four = c(extant ~ mass.g + brain),
+    five = c(extant ~ mass.g, extant ~ brain))
+
+plot_model_set(models)
 
 
-
-
+result <- phylo_path(models, data = data1, tree = tree[[1]], model = 'lambda', method = "logistic_MPLE")
+s <- summary(result)
+plot(s)
+best_model <- best(result)
+plot(best_model)
+average_model <- average(result)
+plot(average_model, algorithm = 'mds', curvature = 0.1)
+```
