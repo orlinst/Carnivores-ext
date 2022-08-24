@@ -187,8 +187,6 @@ dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
 require(naniar)
 require(mice)
 
-data$simpson[23] <- NA
-data$simpson[79] <- NA
 
 gg_miss_var(speciesE)
 vis_miss(speciesE)
@@ -394,10 +392,8 @@ for (i in from:to){
 
 require(phylolm)
 
-regress.multi(tree, data, extant ~ diet.new, 1, 12)
+regress.multi(tree, complete(imp, 2), extant ~ diet.cat, 1, 12)
 
-complete(imp, 2)
-                                    
 ```
 
 #Plots
