@@ -444,13 +444,43 @@ regress.multi.impute(tree, 20, extant ~ mass.g + home.range + loctype + pc + die
 
 pt(asd1, species - vardfs)
 
-prcomp.multi.impute <- function (imputedsets) {
-  prset <- matrix(ncol=100, nrow=100)
-  for (i in 1:imputedsets){
-princomp(complete(imp, i)[, -c(3, 6, 10, 11)]) # only continuous vars
-  prset <<- as.data.frame(capture.output(b2$loadings[,1]), )
-}
-    }
+```
+
+```{r}
+data.pc <- data[,3:16]
+rownames(data.pc) <- data$species
+
+
+PC1 <- list()
+PC2 <- list()
+PC3 <- list()
+
+for (i in 1:20) {     #number of imputed sets
+      
+  a <- princomp(complete(imp, i)[, -c(3, 6, 10, 11)]) # only continuous vars 
+  PC1 <- cbind(PC1, loadings(a)[,1])
+  PC1 <- sapply(PC1, as.numeric)  
+  PC1 <- as.data.frame(PC1)
+  PC1$mean <- rowMeans(PC1)
+  
+  PC2 <- cbind(PC2, loadings(a)[,2])
+  PC2 <- sapply(PC2, as.numeric)  
+  PC2 <- as.data.frame(PC2)
+  PC2$mean <- rowMeans(PC2)
+  
+  PC3 <- cbind(PC3, loadings(a)[,3])
+  PC3 <- sapply(PC3, as.numeric)  
+  PC3 <- as.data.frame(PC3)
+  PC3$mean <- rowMeans(PC3)
+  
+PC.loadings.means <- data.frame(PC1$mean, PC2$mean, PC3$mean)
+
+names <- data.frame(names(loadings(a)[,1]))
+row.names(PC.loadings.means) <- names[,1]
+PC.loadings.means 
+  }
+      
+
 ```
 
 #Plots
