@@ -24,7 +24,7 @@ speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 
 #remove NA level from diet
 #speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
-speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
+#speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
 
 #Log vars
 require(VGAM)
@@ -47,7 +47,7 @@ speciesE$abundance[a] <- a1[a] #transform Yeo–Johnson
 
 #do we need these?
 speciesE$mean.abundance <- NULL #should use median? - recode!
-
+speciesE$diet.new <- NULL
 
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
 ```
@@ -197,7 +197,7 @@ require(mice)
 gg_miss_var(speciesE)
 vis_miss(speciesE)
 
-imp <- mice(data[,3:16], 20, maxit = 10)
+imp <- mice(data[,3:15], 20, maxit = 10)
 
 plot(imp)
 densityplot(imp)
@@ -300,7 +300,7 @@ rm(list=ls(pattern="treeX"))
 ```
 
 
-#Load final tree and data
+#Load final tree and clean data
 ```{r}
 require(phytools)
 require(mulTree)
@@ -444,41 +444,298 @@ regress.multi.impute(tree, 20, extant ~ mass.g + home.range + loctype + pc + die
 
 pt(asd1, species - vardfs)
 
+
+dataI3 <- complete(imp, 3)
+dataI3 <- cbind(dataI3, Scores$S3)
+
+regress.multi(tree, dataI4, extinct ~ `Scores$S4`, 1, 30)
+
+
+
+
+
 ```
 
+#PC
 ```{r}
-data.pc <- data[,3:16]
+data.pc <- data[,3:15]
 rownames(data.pc) <- data$species
 
 
-PC1 <- list()
-PC2 <- list()
-PC3 <- list()
 
-for (i in 1:20) {     #number of imputed sets
+#### Breaking down categorical variables
+options(na.action='na.pass')
+
+loctype <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"loctype"])) # break down factors into 1/0
+extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
+diet.cat <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"diet.cat"]))
+colnames(extant) <- c("extinct", "extant")
+data.pc <- cbind(data.pc, diet.cat, extant, loctype)
+
+data.pc$loctype <- NULL
+data.pc$extant <- NULL
+data.pc$diet.cat <- NULL
+
+
+#Impute data.pc
+
+imp <- mice(data.pc, 6, maxit = 5)
+
+#extract imputed sets in separate dfs
+for(imputedsets in 1: length(imp$imp[[1]])) {
+    assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+   }
+
+#run princomp on all imputed sets
+#get loadings from all imputed sets in pcSET-component
+#get scores from all imputed sets in scoresSET-component
+
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  assign(paste("PCA",imputedsets,sep=""), princomp(scale(get(paste("dataX",imputedsets, sep="")))))
+for (component in 1 : length(PCA1$loadings[,1])) {     #number of components
       
-  a <- princomp(complete(imp, i)[, -c(3, 6, 10, 11)]) # only continuous vars 
+  assign(paste("PrCo",component, "-", imputedsets, sep=""), loadings(get(paste("PCA",imputedsets, sep="")))[,component]) 
+  assign(paste("Scr",component, "-", imputedsets, sep=""), (get(paste("PCA",imputedsets, sep=""))$scores)[,component]) 
+
+  }}
+  
+
+
+#put all loadings and scores PER set in separate objects
+#this works
+
+  for (component in 1 : length(PCA1$loadings[,1])) {
+    
+    assign(paste0("pc",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bPrCo", component, "\\b"))))))
+    assign(paste0("sc",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bScr", component, "\\b"))))))
+  }
+
+rm(list=ls(pattern="PrCo"))
+rm(list=ls(patter= "Scr"))
+rm(list=ls(pattern="dataX"))
+
+
+#get the means per component (both loadings and components)
+for (component in 1 : length(PCA1$loadings[,1])) {
+  
+  assign(paste0("pc.means",component, sep=""), cbind(paste0("pc",component, sep=""), rowMeans(get(paste0("pc",component, sep="")))))
+  assign(paste0("pc",component, sep=""), cbind(get(paste0("pc.means",component, sep="")), get(paste0("pc",component, sep=""))))
+  
+  assign(paste0("sc.means",component, sep=""), cbind(paste0("sc",component, sep=""), rowMeans(get(paste0("sc",component, sep="")))))
+  assign(paste0("sc",component, sep=""), cbind(get(paste0("sc.means",component, sep="")), get(paste0("sc",component, sep=""))))
+  
+}
+  
+rm(list=ls(pattern="pc.means"))
+rm(list=ls(pattern="sc.means"))
+rm(list=ls(patter= "PCA"))
+rm(list=ls(pattern="dataX"))
+
+
+```
+  
+```  
   PC1 <- cbind(PC1, loadings(a)[,1])
   PC1 <- sapply(PC1, as.numeric)  
   PC1 <- as.data.frame(PC1)
   PC1$mean <- rowMeans(PC1)
+  S1 <- cbind(S1, a$scores[,1])
+  S1 <- sapply(S1, as.numeric)  
+  S1 <- as.data.frame(S1)
+  Scores$S1 <- rowMeans(S1)
   
   PC2 <- cbind(PC2, loadings(a)[,2])
   PC2 <- sapply(PC2, as.numeric)  
   PC2 <- as.data.frame(PC2)
   PC2$mean <- rowMeans(PC2)
+  S2 <- cbind(S2, a$scores[,2])
+  S2 <- sapply(S2, as.numeric)  
+  S2 <- as.data.frame(S2)
+  Scores$S2 <- rowMeans(S2)
   
-  PC3 <- cbind(PC3, loadings(a)[,3])
+    PC3 <- cbind(PC3, loadings(a)[,3])
   PC3 <- sapply(PC3, as.numeric)  
   PC3 <- as.data.frame(PC3)
   PC3$mean <- rowMeans(PC3)
+  S3 <- cbind(S3, a$scores[,3])
+  S3 <- sapply(S3, as.numeric)  
+  S3 <- as.data.frame(S3)
+  Scores$S3 <- rowMeans(S3)
   
-PC.loadings.means <- data.frame(PC1$mean, PC2$mean, PC3$mean)
+    PC4 <- cbind(PC4, loadings(a)[,4])
+  PC4 <- sapply(PC4, as.numeric)  
+  PC4 <- as.data.frame(PC4)
+  PC4$mean <- rowMeans(PC4)
+  S4 <- cbind(S4, a$scores[,4])
+  S4 <- sapply(S4, as.numeric)  
+  S4 <- as.data.frame(S4)
+  Scores$S4 <- rowMeans(S4)
+  
+    PC5 <- cbind(PC5, loadings(a)[,5])
+  PC5 <- sapply(PC5, as.numeric)  
+  PC5 <- as.data.frame(PC5)
+  PC5$mean <- rowMeans(PC5)
+  S5 <- cbind(S5, a$scores[,5])
+  S5 <- sapply(S5, as.numeric)  
+  S5 <- as.data.frame(S5)
+  Scores$S5 <- rowMeans(S5)
+  
+    PC6 <- cbind(PC6, loadings(a)[,6])
+  PC6 <- sapply(PC6, as.numeric)  
+  PC6 <- as.data.frame(PC6)
+  PC6$mean <- rowMeans(PC6)
+  S6 <- cbind(S6, a$scores[,6])
+  S6 <- sapply(S6, as.numeric)  
+  S6 <- as.data.frame(S6)
+  Scores$S6 <- rowMeans(S6)
+  
+    PC7 <- cbind(PC7, loadings(a)[,7])
+  PC7 <- sapply(PC7, as.numeric)  
+  PC7 <- as.data.frame(PC7)
+  PC7$mean <- rowMeans(PC7)
+  S7 <- cbind(S7, a$scores[,7])
+  S7 <- sapply(S7, as.numeric)  
+  S7 <- as.data.frame(S7)
+  Scores$S7 <- rowMeans(S7)
+  
+    PC8 <- cbind(PC8, loadings(a)[,8])
+  PC8 <- sapply(PC8, as.numeric)  
+  PC8 <- as.data.frame(PC8)
+  PC8$mean <- rowMeans(PC8)
+  S8 <- cbind(S8, a$scores[,8])
+  S8 <- sapply(S8, as.numeric)  
+  S8 <- as.data.frame(S8)
+  Scores$S8 <- rowMeans(S8)
+  
+    PC9 <- cbind(PC9, loadings(a)[,9])
+  PC9 <- sapply(PC9, as.numeric)  
+  PC9 <- as.data.frame(PC9)
+  PC9$mean <- rowMeans(PC9)
+  S9 <- cbind(S9, a$scores[,9])
+  S9 <- sapply(S9, as.numeric)  
+  S9 <- as.data.frame(S9)
+  Scores$S9 <- rowMeans(S9)
+  
+    PC10 <- cbind(PC10, loadings(a)[,10])
+  PC10 <- sapply(PC10, as.numeric)  
+  PC10 <- as.data.frame(PC10)
+  PC10$mean <- rowMeans(PC10)
+  S10 <- cbind(S10, a$scores[,10])
+  S10 <- sapply(S10, as.numeric)  
+  S10 <- as.data.frame(S10)
+  Scores$S10 <- rowMeans(S10)
+  
+      PC11 <- cbind(PC11, loadings(a)[,11])
+  PC11 <- sapply(PC11, as.numeric)  
+  PC11 <- as.data.frame(PC11)
+  PC11$mean <- rowMeans(PC11)
+  S11 <- cbind(S11, a$scores[,11])
+  S11 <- sapply(S11, as.numeric)  
+  S11 <- as.data.frame(S11)
+  Scores$S11 <- rowMeans(S11)
+  
+      PC12 <- cbind(PC12, loadings(a)[,12])
+  PC12 <- sapply(PC12, as.numeric)  
+  PC12 <- as.data.frame(PC12)
+  PC12$mean <- rowMeans(PC12)
+  S12 <- cbind(S12, a$scores[,12])
+  S12 <- sapply(S12, as.numeric)  
+  S12 <- as.data.frame(S12)
+  Scores$S12 <- rowMeans(S12)
+  
+      PC13 <- cbind(PC13, loadings(a)[,13])
+  PC13 <- sapply(PC13, as.numeric)  
+  PC13 <- as.data.frame(PC13)
+  PC13$mean <- rowMeans(PC13)
+  S13 <- cbind(S13, a$scores[,13])
+  S13 <- sapply(S13, as.numeric)  
+  S13 <- as.data.frame(S13)
+  Scores$S13 <- rowMeans(S13)
+  
+      PC14 <- cbind(PC14, loadings(a)[,14])
+  PC14 <- sapply(PC14, as.numeric)  
+  PC14 <- as.data.frame(PC14)
+  PC14$mean <- rowMeans(PC14)
+  S14 <- cbind(S14, a$scores[,14])
+  S14 <- sapply(S14, as.numeric)  
+  S14 <- as.data.frame(S14)
+  Scores$S14 <- rowMeans(S14)
+  
+      PC15 <- cbind(PC15, loadings(a)[,15])
+  PC15 <- sapply(PC15, as.numeric)  
+  PC15 <- as.data.frame(PC15)
+  PC15$mean <- rowMeans(PC15)
+  S15 <- cbind(S15, a$scores[,15])
+  S15 <- sapply(S15, as.numeric)  
+  S15 <- as.data.frame(S15)
+  Scores$S15 <- rowMeans(S15)
+  
+      PC16 <- cbind(PC16, loadings(a)[,16])
+  PC16 <- sapply(PC16, as.numeric)  
+  PC16 <- as.data.frame(PC16)
+  PC16$mean <- rowMeans(PC16)
+  S16 <- cbind(S16, a$scores[,16])
+  S16 <- sapply(S16, as.numeric)  
+  S16 <- as.data.frame(S16)
+  Scores$S16 <- rowMeans(S16)
+  
+    PC17 <- cbind(PC17, loadings(a)[,17])
+  PC17 <- sapply(PC17, as.numeric)  
+  PC17 <- as.data.frame(PC17)
+  PC17$mean <- rowMeans(PC17)
+  S17 <- cbind(S17, a$scores[,17])
+  S17 <- sapply(S17, as.numeric)  
+  S17 <- as.data.frame(S17)
+  Scores$S17 <- rowMeans(S17)
+  
+      PC18 <- cbind(PC18, loadings(a)[,18])
+  PC18 <- sapply(PC18, as.numeric)  
+  PC18 <- as.data.frame(PC18)
+  PC18$mean <- rowMeans(PC18)
+  S18 <- cbind(S18, a$scores[,18])
+  S18 <- sapply(S18, as.numeric)  
+  S18 <- as.data.frame(S18)
+  Scores$S18 <- rowMeans(S18)
+  
+      PC19 <- cbind(PC19, loadings(a)[,19])
+  PC19 <- sapply(PC19, as.numeric)  
+  PC19 <- as.data.frame(PC19)
+  PC19$mean <- rowMeans(PC19)
+  S19 <- cbind(S19, a$scores[,19])
+  S19 <- sapply(S19, as.numeric)  
+  S19 <- as.data.frame(S19)
+  Scores$S19 <- rowMeans(S19)
+  
+      PC20 <- cbind(PC20, loadings(a)[,20])
+  PC20 <- sapply(PC20, as.numeric)  
+  PC20 <- as.data.frame(PC20)
+  PC20$mean <- rowMeans(PC20)
+  S20 <- cbind(S20, a$scores[,20])
+  S20 <- sapply(S20, as.numeric)  
+  S20 <- as.data.frame(S20)
+  Scores$S20 <- rowMeans(S20)
+
+}
+
+ 
+Scores1 <- data.frame(Scores$S1, Scores$S2, Scores$S3, Scores$S4, Scores$S5, Scores$S6, Scores$S7, Scores$S8, Scores$S9, Scores$S10, Scores$S11, Scores$S12, Scores$S13, Scores$S14, Scores$S15, Scores$S16, Scores$S17, Scores$S18, Scores$S19, Scores$S20)
+
+data.new <- Scores1
+
+
+# dataI1 <- complete(imp, 1)
+# dataI1 <- cbind(dataI1, Scores1$S1)
+
+#Scores1$mean <- rowMeans(Scores1)
+
+ 
+PC.loadings.means <- data.frame(PC1$mean, PC2$mean, PC3$mean, PC4$mean, PC5$mean, PC6$mean, PC7$mean, PC8$mean, PC9$mean, PC10$mean, PC11$mean, PC12$mean, PC13$mean, PC14$mean, PC15$mean, PC16$mean, PC17$mean, PC18$mean, PC19$mean, PC20$mean)
 
 names <- data.frame(names(loadings(a)[,1]))
 row.names(PC.loadings.means) <- names[,1]
 PC.loadings.means 
-  }
+
 ```
 
 #Plots
