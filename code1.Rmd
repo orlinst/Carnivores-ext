@@ -8,7 +8,7 @@ date: '2022-07-20'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Loading the data
+#Load data
 ```{r}
 require(psych)
 
@@ -458,80 +458,96 @@ regress.multi(tree, dataI4, extinct ~ `Scores$S4`, 1, 30)
 
 #PC
 ```{r}
+
+#Load data for pc, exclude chars
 data.pc <- data[,3:15]
 rownames(data.pc) <- data$species
 
 
-
-#### Breaking down categorical variables
-options(na.action='na.pass')
+#### Breaking down cat variables
+options(na.action='na.pass') #return NA for missing data on cat vars
 
 loctype <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"loctype"])) # break down factors into 1/0
 extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
 diet.cat <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"diet.cat"]))
-colnames(extant) <- c("extinct", "extant")
+colnames(extant) <- c("extinct", "extant") #so they can be easily distinguished
 data.pc <- cbind(data.pc, diet.cat, extant, loctype)
 
+#remove old cats
 data.pc$loctype <- NULL
 data.pc$extant <- NULL
 data.pc$diet.cat <- NULL
 
 
 #Impute data.pc
-
-imp <- mice(data.pc, 6, maxit = 5)
-
-#extract imputed sets in separate dfs
-for(imputedsets in 1: length(imp$imp[[1]])) {
-    assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
-   }
+require(mice)
+imp <- mice(data.pc, 5, maxit = 5)
 
 #run princomp on all imputed sets
 #get loadings from all imputed sets in pcSET-component
 #get scores from all imputed sets in scoresSET-component
 
-
 for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+  
+  
   assign(paste("PCA",imputedsets,sep=""), princomp(scale(get(paste("dataX",imputedsets, sep="")))))
 for (component in 1 : length(PCA1$loadings[,1])) {     #number of components
       
-  assign(paste("PrCo",component, "-", imputedsets, sep=""), loadings(get(paste("PCA",imputedsets, sep="")))[,component]) 
-  assign(paste("Scr",component, "-", imputedsets, sep=""), (get(paste("PCA",imputedsets, sep=""))$scores)[,component]) 
+  assign(paste("loadings",component, "-", imputedsets, sep=""), loadings(get(paste("PCA",imputedsets, sep="")))[,component]) 
+  assign(paste("scores",component, "-", imputedsets, sep=""), (get(paste("PCA",imputedsets, sep=""))$scores)[,component]) 
 
-  }}
+  #put all loadings and scores PER set in separate objects
+  #this works
   
+  assign(paste0("PC",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bloadings", component, "\\b"))))))
+  assign(paste0("Score",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bscores", component, "\\b"))))))
+  
+  }}
 
 
-#put all loadings and scores PER set in separate objects
-#this works
 
-  for (component in 1 : length(PCA1$loadings[,1])) {
-    
-    assign(paste0("pc",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bPrCo", component, "\\b"))))))
-    assign(paste0("sc",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bScr", component, "\\b"))))))
-  }
 
-rm(list=ls(pattern="PrCo"))
-rm(list=ls(patter= "Scr"))
-rm(list=ls(pattern="dataX"))
 
 
 #get the means per component (both loadings and components)
 for (component in 1 : length(PCA1$loadings[,1])) {
   
-  assign(paste0("pc.means",component, sep=""), cbind(paste0("pc",component, sep=""), rowMeans(get(paste0("pc",component, sep="")))))
-  assign(paste0("pc",component, sep=""), cbind(get(paste0("pc.means",component, sep="")), get(paste0("pc",component, sep=""))))
+  assign(paste0("pc.means",component, sep=""), cbind(paste0("PC",component, sep=""), rowMeans(get(paste0("PC",component, sep="")))))
+  assign(paste0("PC",component, sep=""), cbind(get(paste0("pc.means",component, sep="")), get(paste0("PC",component, sep=""))))
   
-  assign(paste0("sc.means",component, sep=""), cbind(paste0("sc",component, sep=""), rowMeans(get(paste0("sc",component, sep="")))))
-  assign(paste0("sc",component, sep=""), cbind(get(paste0("sc.means",component, sep="")), get(paste0("sc",component, sep=""))))
+  assign(paste0("sc.means",component, sep=""), cbind(paste0("Score",component, sep=""), rowMeans(get(paste0("Score",component, sep="")))))
+  assign(paste0("Score",component, sep=""), cbind(get(paste0("sc.means",component, sep="")), get(paste0("Score",component, sep=""))))
+  
+  assign(paste0("PC",component, sep=""), get(paste0("PC",component, sep=""))[-1])
+  assign(paste0("Score",component, sep=""), get(paste0("Score",component, sep=""))[-1])
   
 }
+
+#change rowname from 2 to mean
+
+for (i in paste0("PC", 1:length(PCA1$loadings[,1]))){
+  d=get(i)
+  colnames(d)[1]='mean'
+  assign(i,d)
+}
+
+for (i in paste0("Score", 1:length(PCA1$loadings[,1]))){
+  d=get(i)
+  colnames(d)[1]='mean'
+  assign(i,d)
+}
   
+
+
+
 rm(list=ls(pattern="pc.means"))
 rm(list=ls(pattern="sc.means"))
-rm(list=ls(patter= "PCA"))
+#rm(list=ls(patter= "PCA"))
 rm(list=ls(pattern="dataX"))
-
+rm(list=ls(pattern="loadings"))
+rm(list=ls(patter= "scores"))
 
 ```
   
