@@ -699,6 +699,7 @@ imp <- mice(data.pc, 20, maxit = 5, method = c("cart", "pmm", "cart", "cart", "c
 #densityplot(imp)
 #stripplot(imp, pch = 20, cex = 1.2)
 
+#arrange(dataX1, desc(pc))
 
 #run princomp on all imputed sets
 #get loadings from all imputed sets in pcSET-component
