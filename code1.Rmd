@@ -8,7 +8,7 @@ date: '2022-07-20'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Load data
+#1. Load data
 ```{r}
 require(psych)
 
@@ -76,7 +76,7 @@ speciesE$extant[is.na(speciesE$extant)] <- 0
 ```
 
 
-##Add data from other datasets
+#Add data from other datasets
 ```{r}
 
 #HELBSTAB
@@ -170,738 +170,7 @@ speciesE$diet.new <- speciesE1$diet.new
 
 ```
 
-
-#Wrangle, explore and investigate
-```{r}
-require(easystats)
-require(psych)
-describe_distribution(speciesE)
-multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
-
-
-
-data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors back with NA level to count it
-
-
-require(lattice)
-dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
-```
-
-
-#Misingness (and imputation)
-```{r}
-require(naniar)
-require(mice)
-
-
-gg_miss_var(speciesE)
-vis_miss(speciesE)
-
-imp <- mice(data[,3:15], 20, maxit = 10)
-
-plot(imp)
-densityplot(imp)
-stripplot(imp, pch = 20, cex = 1.2)
-
-complete(imp, 2)
-```
-
-#Tree wrangle
-```{r}
-require(phytools)
-require(BAMMtools)
-
-
-treeF <- read.tree("Complete_phylogeny.nex")
-rownames(speciesE) <- speciesE$species_
-
-#Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
-
-for (i in 1:length(tree))	{
-tip <- "Martes_caurina"
-sister <- "Martes_americana"
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
-    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) 
-
-
-tip <- "Conepatus_robustus"
-sister <- "Conepatus_chinga"
-sister2 <- "Conepatus_leuconotus" 
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=getmrca(tree[[i]], sister, sister2),
-    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sister, sister2)])) 
-
-tip <- "Felis_lybica"
-sister <- "Felis_silvestris"
-
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
-    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) }
-
-
-grep("Martes", tree[[7]]$tip.label, value = TRUE)
-
-
-clean <- clean.data(speciesE, tree)
-tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
-data1 <- clean$data
-
-```
-
-
-###*bad solution
-```{r}
-#adding missing species loop (bad solution with tree extraction!)
-
-#extract all trees
-treeNew <- list()
-class(treeNew) <- "multiPhylo"
-
-
-for(ntrees in 1:length(tree)) {
-    assign(paste0("treeX", ntrees), tree[[ntrees]])
-}
-
-for (i in 1:length(tree))	{
-tip <- "Martes_caurina"
-sister <- "Martes_americana"
-
-treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
-    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
-    which((get(paste0("treeX",i)))$tip.label==sister))])) }
-    
-for(ntrees in 1:length(tree)) {
-    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
-}
-
-
-for (i in 1:length(tree))	{
-tip <- "Felis_lybica"
-sister <- "Felis_silvestris"
-treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
-    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
-    which((get(paste0("treeX",i)))$tip.label==sister))])) }
-
-for(ntrees in 1:length(tree)) {
-    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
-}
-
-for (i in 1:length(tree))	{
-tip <- "Conepatus_robustus"
-sister <- "Conepatus_leuconotus"
-treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
-    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
-    which((get(paste0("treeX",i)))$tip.label==sister))])) }
-
-
-rm(list=ls(pattern="treeX"))
-```
-
-
-#Load final tree and clean data
-```{r}
-require(phytools)
-require(mulTree)
-tree <- read.tree("CompletePhyCarn.txt")
-
-clean <- clean.data(speciesE, tree)
-tree1 <- clean$tree[[2]]
-data <- clean$data
-
-```
-
-#Analyses - gls;phyloglm;rstanarm
-```{r}
-
-require(phylolm)
-require(rstanarm)
-
-
-#Non-phylo gls
-a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
-summary(a)
-
-#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
-
-#timetree phy
-tree2 <- read.newick("spcs.nwk")
-clean.data(speciesE, tree)
-
-
-aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
-aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
-aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
-aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
-
-#phylacine phy
-#treeF <- read.nexus("Complete_phylogeny.nex")
-#rownames(speciesE) <- speciesE$species_
-#clean <- clean.data(speciesE, treeF)
-#tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
-#data1 <- clean$data
-
-#check the diet var!
-#data1$diet.new <- as.factor(data1$diet.new)
-#data1$diet.new <- factor(data1$diet.new, exclude="")
-
-#USE THE MULTI.REGRESS
-
-phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
-phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
-
-#rstanarm
-
-fit_rstanarm <- stan_glm(
-    extant ~ loctype,
-    data = speciesE,
-    family = "binomial"
-)
-
-summary (fit_rstanarm)
-```
-
-##Functions
-```{r}
-
-print.pval <- function(x, digits = 6) {
-    sig_level <- cut(x,
-                     breaks = c(-Inf, 0, 0.0001, 0.001, 0.01, 0.05, Inf),
-                     labels = c("", "****", "***", "**", "*", ""))
-    print(paste0(signif(x, digits = digits), sig_level), quote = FALSE)
-    invisible(x)
-}
-
-#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
-regress.multi <- function (multree, data, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
-    a = 0 #counter for sig models
-# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
-# (see print.pval fun) and prints them - progress is displayed
-for (i in from:to){
-    temptree <- multree[[i]]
-    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
-    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
-    asd <- as.numeric(s2[[1]])
-      if(any(asd[-1]<alpha)){
-        print.pval(asd[-1]) 
-        a = a+1
-        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
-        }
-        #print(summary(s1)$coefficients[,4])
-        print (summary(s1))
-                  }
-    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
-    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
-    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
-    }
-
-require(phylolm)
-
-regress.multi(tree, complete(imp, 2), extant ~ diet.cat, 1, 12)
-
-
-
-#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
-regress.multi.impute <- function (multree, sets, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
-    a = 0 #counter for sig models
-    b = 0
-    z = matrix(ncol = 18, nrow =sets*(to-from+1))
-    #z <- NULL
-    #z <- data.frame(matrix(ncol = 10, nrow = 10))
-# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
-# (see print.pval fun) and prints them - progress is displayed
-for (i in from:to){
-for (imps in 1:sets){
-    temptree <- multree[[i]]
-    
-    s1 <- phyloglm(model, complete(imp, imps), temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
-    b = b + 1
-    k = summary(s1)$coefficients[,3]
-    print(k)
-    #print(length(k))
-    z[b , 1 : length(k)] = k
-    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
-    asd <- as.numeric(s2[[1]])
-      if(any(asd[-1]<alpha)){
-        print.pval(asd[-1]) 
-        a = a+1
-        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
-      }
-   
-        #print(summary(s1)$coefficients[,4])
-        #print (summary(s1))
-        #print(z)
-                  }}
-    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
-    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
-    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "x", sets, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
-    print(list(colMeans(z, na.rm=T)))
-    asd1 <<- capture.output(colMeans(z, na.rm=T))
-    #asd12 <- capture.output(cbind(row.names(s2),asd1))
-    }
-regress.multi.impute(tree, 20, extant ~ mass.g + home.range + loctype + pc + diet.cat + litter, 150, 200)
-
-pt(asd1, species - vardfs)
-
-
-dataI3 <- complete(imp, 3)
-dataI3 <- cbind(dataI3, Scores$S3)
-
-regress.multi(tree, dataI4, extinct ~ `Scores$S4`, 1, 30)
-
-
-
-
-
-```
-
-#PC
-```{r}
-
-#Load data for pc, exclude chars
-data.pc <- data[,3:15]
-rownames(data.pc) <- data$species
-
-
-#### Breaking down cat variables
-options(na.action='na.pass') #return NA for missing data on cat vars
-
-loctype <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"loctype"])) # break down factors into 1/0
-extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
-diet.cat <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"diet.cat"]))
-colnames(extant) <- c("extinct", "extant") #so they can be easily distinguished
-data.pc <- cbind(data.pc, diet.cat, extant, loctype)
-
-#remove old cats
-data.pc$loctype <- NULL
-data.pc$extant <- NULL
-data.pc$diet.cat <- NULL
-
-
-#Impute data.pc
-require(mice)
-imp <- mice(data.pc, 5, maxit = 5)
-
-#run princomp on all imputed sets
-#get loadings from all imputed sets in pcSET-component
-#get scores from all imputed sets in scoresSET-component
-
-for(imputedsets in 1: length(imp$imp[[1]])) {
-  #extract imputed sets in separate dfs
-  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
-  
-  
-  assign(paste("PCA",imputedsets,sep=""), princomp(scale(get(paste("dataX",imputedsets, sep="")))))
-for (component in 1 : length(PCA1$loadings[,1])) {     #number of components
-      
-  assign(paste("loadings",component, "-", imputedsets, sep=""), loadings(get(paste("PCA",imputedsets, sep="")))[,component]) 
-  assign(paste("scores",component, "-", imputedsets, sep=""), (get(paste("PCA",imputedsets, sep=""))$scores)[,component]) 
-
-  #put all loadings and scores PER set in separate objects
-  #this works
-  
-  assign(paste0("PC",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bloadings", component, "\\b"))))))
-  assign(paste0("Score",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bscores", component, "\\b"))))))
-  
-  }}
-
-
-
-
-
-
-#get the means per component (both loadings and components)
-for (component in 1 : length(PCA1$loadings[,1])) {
-  
-  assign(paste0("pc.means",component, sep=""), cbind(paste0("PC",component, sep=""), rowMeans(get(paste0("PC",component, sep="")))))
-  assign(paste0("PC",component, sep=""), cbind(get(paste0("pc.means",component, sep="")), get(paste0("PC",component, sep=""))))
-  
-  assign(paste0("sc.means",component, sep=""), cbind(paste0("Score",component, sep=""), rowMeans(get(paste0("Score",component, sep="")))))
-  assign(paste0("Score",component, sep=""), cbind(get(paste0("sc.means",component, sep="")), get(paste0("Score",component, sep=""))))
-  
-  assign(paste0("PC",component, sep=""), get(paste0("PC",component, sep=""))[-1])
-  assign(paste0("Score",component, sep=""), get(paste0("Score",component, sep=""))[-1])
-  
-}
-
-#change rowname from 2 to mean
-
-for (i in paste0("PC", 1:length(PCA1$loadings[,1]))){
-  d=get(i)
-  colnames(d)[1]='mean'
-  assign(i,d)
-}
-
-for (i in paste0("Score", 1:length(PCA1$loadings[,1]))){
-  d=get(i)
-  colnames(d)[1]='mean'
-  assign(i,d)
-}
-  
-
-
-
-rm(list=ls(pattern="pc.means"))
-rm(list=ls(pattern="sc.means"))
-#rm(list=ls(patter= "PCA"))
-rm(list=ls(pattern="dataX"))
-rm(list=ls(pattern="loadings"))
-rm(list=ls(patter= "scores"))
-
-
-#get all the means in one df
-
-MeanPC <- PC1
-for (i in paste0("PC", 1:length(PCA1$loadings[,1]))) {
-    m = get(i)[1]
-    MeanPC[i] <- cbind(m)
-    #assign(i, m)
-}
-MeanPC$mean <- NULL
-
-MeanLoadings <- Score1
-for (i in paste0("Score", 1:length(PCA1$loadings[,1]))) {
-    m = get(i)[1]
-    MeanLoadings[i] <- cbind(m)
-    #assign(i, m)
-}
-
-MeanLoadings[1:6] <- NULL
-
-
-
-#add to the dataX (original imputed sets)
-
-
-for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
-    assign(i, cbind(get(i), MeanLoadings))
-}
-
-
-
-
-```
-  
-```  
-  PC1 <- cbind(PC1, loadings(a)[,1])
-  PC1 <- sapply(PC1, as.numeric)  
-  PC1 <- as.data.frame(PC1)
-  PC1$mean <- rowMeans(PC1)
-  S1 <- cbind(S1, a$scores[,1])
-  S1 <- sapply(S1, as.numeric)  
-  S1 <- as.data.frame(S1)
-  Scores$S1 <- rowMeans(S1)
-  
-  PC2 <- cbind(PC2, loadings(a)[,2])
-  PC2 <- sapply(PC2, as.numeric)  
-  PC2 <- as.data.frame(PC2)
-  PC2$mean <- rowMeans(PC2)
-  S2 <- cbind(S2, a$scores[,2])
-  S2 <- sapply(S2, as.numeric)  
-  S2 <- as.data.frame(S2)
-  Scores$S2 <- rowMeans(S2)
-  
-    PC3 <- cbind(PC3, loadings(a)[,3])
-  PC3 <- sapply(PC3, as.numeric)  
-  PC3 <- as.data.frame(PC3)
-  PC3$mean <- rowMeans(PC3)
-  S3 <- cbind(S3, a$scores[,3])
-  S3 <- sapply(S3, as.numeric)  
-  S3 <- as.data.frame(S3)
-  Scores$S3 <- rowMeans(S3)
-  
-    PC4 <- cbind(PC4, loadings(a)[,4])
-  PC4 <- sapply(PC4, as.numeric)  
-  PC4 <- as.data.frame(PC4)
-  PC4$mean <- rowMeans(PC4)
-  S4 <- cbind(S4, a$scores[,4])
-  S4 <- sapply(S4, as.numeric)  
-  S4 <- as.data.frame(S4)
-  Scores$S4 <- rowMeans(S4)
-  
-    PC5 <- cbind(PC5, loadings(a)[,5])
-  PC5 <- sapply(PC5, as.numeric)  
-  PC5 <- as.data.frame(PC5)
-  PC5$mean <- rowMeans(PC5)
-  S5 <- cbind(S5, a$scores[,5])
-  S5 <- sapply(S5, as.numeric)  
-  S5 <- as.data.frame(S5)
-  Scores$S5 <- rowMeans(S5)
-  
-    PC6 <- cbind(PC6, loadings(a)[,6])
-  PC6 <- sapply(PC6, as.numeric)  
-  PC6 <- as.data.frame(PC6)
-  PC6$mean <- rowMeans(PC6)
-  S6 <- cbind(S6, a$scores[,6])
-  S6 <- sapply(S6, as.numeric)  
-  S6 <- as.data.frame(S6)
-  Scores$S6 <- rowMeans(S6)
-  
-    PC7 <- cbind(PC7, loadings(a)[,7])
-  PC7 <- sapply(PC7, as.numeric)  
-  PC7 <- as.data.frame(PC7)
-  PC7$mean <- rowMeans(PC7)
-  S7 <- cbind(S7, a$scores[,7])
-  S7 <- sapply(S7, as.numeric)  
-  S7 <- as.data.frame(S7)
-  Scores$S7 <- rowMeans(S7)
-  
-    PC8 <- cbind(PC8, loadings(a)[,8])
-  PC8 <- sapply(PC8, as.numeric)  
-  PC8 <- as.data.frame(PC8)
-  PC8$mean <- rowMeans(PC8)
-  S8 <- cbind(S8, a$scores[,8])
-  S8 <- sapply(S8, as.numeric)  
-  S8 <- as.data.frame(S8)
-  Scores$S8 <- rowMeans(S8)
-  
-    PC9 <- cbind(PC9, loadings(a)[,9])
-  PC9 <- sapply(PC9, as.numeric)  
-  PC9 <- as.data.frame(PC9)
-  PC9$mean <- rowMeans(PC9)
-  S9 <- cbind(S9, a$scores[,9])
-  S9 <- sapply(S9, as.numeric)  
-  S9 <- as.data.frame(S9)
-  Scores$S9 <- rowMeans(S9)
-  
-    PC10 <- cbind(PC10, loadings(a)[,10])
-  PC10 <- sapply(PC10, as.numeric)  
-  PC10 <- as.data.frame(PC10)
-  PC10$mean <- rowMeans(PC10)
-  S10 <- cbind(S10, a$scores[,10])
-  S10 <- sapply(S10, as.numeric)  
-  S10 <- as.data.frame(S10)
-  Scores$S10 <- rowMeans(S10)
-  
-      PC11 <- cbind(PC11, loadings(a)[,11])
-  PC11 <- sapply(PC11, as.numeric)  
-  PC11 <- as.data.frame(PC11)
-  PC11$mean <- rowMeans(PC11)
-  S11 <- cbind(S11, a$scores[,11])
-  S11 <- sapply(S11, as.numeric)  
-  S11 <- as.data.frame(S11)
-  Scores$S11 <- rowMeans(S11)
-  
-      PC12 <- cbind(PC12, loadings(a)[,12])
-  PC12 <- sapply(PC12, as.numeric)  
-  PC12 <- as.data.frame(PC12)
-  PC12$mean <- rowMeans(PC12)
-  S12 <- cbind(S12, a$scores[,12])
-  S12 <- sapply(S12, as.numeric)  
-  S12 <- as.data.frame(S12)
-  Scores$S12 <- rowMeans(S12)
-  
-      PC13 <- cbind(PC13, loadings(a)[,13])
-  PC13 <- sapply(PC13, as.numeric)  
-  PC13 <- as.data.frame(PC13)
-  PC13$mean <- rowMeans(PC13)
-  S13 <- cbind(S13, a$scores[,13])
-  S13 <- sapply(S13, as.numeric)  
-  S13 <- as.data.frame(S13)
-  Scores$S13 <- rowMeans(S13)
-  
-      PC14 <- cbind(PC14, loadings(a)[,14])
-  PC14 <- sapply(PC14, as.numeric)  
-  PC14 <- as.data.frame(PC14)
-  PC14$mean <- rowMeans(PC14)
-  S14 <- cbind(S14, a$scores[,14])
-  S14 <- sapply(S14, as.numeric)  
-  S14 <- as.data.frame(S14)
-  Scores$S14 <- rowMeans(S14)
-  
-      PC15 <- cbind(PC15, loadings(a)[,15])
-  PC15 <- sapply(PC15, as.numeric)  
-  PC15 <- as.data.frame(PC15)
-  PC15$mean <- rowMeans(PC15)
-  S15 <- cbind(S15, a$scores[,15])
-  S15 <- sapply(S15, as.numeric)  
-  S15 <- as.data.frame(S15)
-  Scores$S15 <- rowMeans(S15)
-  
-      PC16 <- cbind(PC16, loadings(a)[,16])
-  PC16 <- sapply(PC16, as.numeric)  
-  PC16 <- as.data.frame(PC16)
-  PC16$mean <- rowMeans(PC16)
-  S16 <- cbind(S16, a$scores[,16])
-  S16 <- sapply(S16, as.numeric)  
-  S16 <- as.data.frame(S16)
-  Scores$S16 <- rowMeans(S16)
-  
-    PC17 <- cbind(PC17, loadings(a)[,17])
-  PC17 <- sapply(PC17, as.numeric)  
-  PC17 <- as.data.frame(PC17)
-  PC17$mean <- rowMeans(PC17)
-  S17 <- cbind(S17, a$scores[,17])
-  S17 <- sapply(S17, as.numeric)  
-  S17 <- as.data.frame(S17)
-  Scores$S17 <- rowMeans(S17)
-  
-      PC18 <- cbind(PC18, loadings(a)[,18])
-  PC18 <- sapply(PC18, as.numeric)  
-  PC18 <- as.data.frame(PC18)
-  PC18$mean <- rowMeans(PC18)
-  S18 <- cbind(S18, a$scores[,18])
-  S18 <- sapply(S18, as.numeric)  
-  S18 <- as.data.frame(S18)
-  Scores$S18 <- rowMeans(S18)
-  
-      PC19 <- cbind(PC19, loadings(a)[,19])
-  PC19 <- sapply(PC19, as.numeric)  
-  PC19 <- as.data.frame(PC19)
-  PC19$mean <- rowMeans(PC19)
-  S19 <- cbind(S19, a$scores[,19])
-  S19 <- sapply(S19, as.numeric)  
-  S19 <- as.data.frame(S19)
-  Scores$S19 <- rowMeans(S19)
-  
-      PC20 <- cbind(PC20, loadings(a)[,20])
-  PC20 <- sapply(PC20, as.numeric)  
-  PC20 <- as.data.frame(PC20)
-  PC20$mean <- rowMeans(PC20)
-  S20 <- cbind(S20, a$scores[,20])
-  S20 <- sapply(S20, as.numeric)  
-  S20 <- as.data.frame(S20)
-  Scores$S20 <- rowMeans(S20)
-
-}
-
- 
-Scores1 <- data.frame(Scores$S1, Scores$S2, Scores$S3, Scores$S4, Scores$S5, Scores$S6, Scores$S7, Scores$S8, Scores$S9, Scores$S10, Scores$S11, Scores$S12, Scores$S13, Scores$S14, Scores$S15, Scores$S16, Scores$S17, Scores$S18, Scores$S19, Scores$S20)
-
-data.new <- Scores1
-
-
-# dataI1 <- complete(imp, 1)
-# dataI1 <- cbind(dataI1, Scores1$S1)
-
-#Scores1$mean <- rowMeans(Scores1)
-
- 
-PC.loadings.means <- data.frame(PC1$mean, PC2$mean, PC3$mean, PC4$mean, PC5$mean, PC6$mean, PC7$mean, PC8$mean, PC9$mean, PC10$mean, PC11$mean, PC12$mean, PC13$mean, PC14$mean, PC15$mean, PC16$mean, PC17$mean, PC18$mean, PC19$mean, PC20$mean)
-
-names <- data.frame(names(loadings(a)[,1]))
-row.names(PC.loadings.means) <- names[,1]
-PC.loadings.means 
-
-```
-
-#Plots
-```{r}
-
-#clean <- clean.data(data, tree1)
-#tree1 <- clean$tree
-#data <- clean$data1
-
-
-#choose cols to plot
-colnames(data)
-
-#Get them by number
-#nameCol <- data.frame(colnames(data))
-#cols <- nameCol[c(4,6,8),]
-
-#Get them by name
-cols <- c("loctype","diet.new", "extant")
-
-#Fetch only the desired columns in a new df and give it row names
-data1 <- data[c(cols)]
-
-#convert vars to what they need to be - factor, numeric etc (if need be) (factors with NA level)
-data1[cols] <- lapply(data1[cols], factor, exclude="")
-
-#check if it worked
-levels(data1[,1])
-sapply(data1, class)
-
-#get 1 tree
-tree1 <- tree[[2]]
-
-require(ggtree)
-require(ggplot2)
-require(wesanderson)
-
-pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
-
-
-#tree1 <- drop.tip(tree1, "Felis_catus")
-
-
-#Circular tree with traits from data1
-circ <- ggtree(tree1, layout = "circular")
-p1 <- gheatmap(circ, data1, offset=.8, width=.2,
-               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
-
-#Visualise traits per cat
-p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label, width=.5)) + 
-    geom_tile(aes(fill=`extant`)) + scale_fill_viridis_d() + 
-    theme_minimal() + xlab(NULL) + ylab(NULL)
-
-#+ geom_tippoint(aes(color = c("a", "b")))
-
-#circ tree with offset
-circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
-p1 <- gheatmap(circ, data1, offset=.8, width=.2,
-               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
-
-#Tree with offset
-g <- ggtree(tree1) + geom_tiplab(align=TRUE, offset=15) + hexpand(.5)
-
-#Plot the heatmap
-p5 <- gheatmap(g, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25, colnames_position = "top")
-
-
-#grep("robustus", b, value = TRUE)
-
-
-#heatmap using ggtree
-
-p11 <- ggtree(tree[[1]]) + 
-    xlim(0, 150) +
-    geom_tiplab(size=4, offset = 35)
-
-p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
-
-#phylo.heatmap(tree,X,standardize=TRUE)
-
-
-library(aplot)
-p21 %>% insert_left(p5) %>% insert_right(p1, width=.5) 
-
-
-
-
-library(ggridges)
-ggplot(speciesE, aes(x = brain, y = extant, fill = stat(x))) +
-    geom_density_ridges_gradient() +
-    scale_fill_viridis_c(name = "Depth", option = "C")
-
-
-ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
-    geom_density_ridges_gradient() +
-    scale_fill_viridis_c(name = "Depth", option = "C") +
-    coord_cartesian(clip = "off") + # To avoid cut off
-    theme_minimal()
-
-ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
-    geom_density_ridges_gradient(stat="binline") +
-    scale_fill_viridis_c(name = "Depth", option = "C") +
-    coord_cartesian(clip = "off") + # To avoid cut off
-    theme_minimal()
-
-
-speciesE %>%
-     mutate(diet.cat = factor(diet.cat)) %>%
-     ggplot() +
-     geom_boxplot(aes(x = diet.cat, y = log(mass.g)))
-
-ggplot(speciesE) + 
-    geom_density_ridges(aes(x = log(mass.g), y = diet.cat, group = interaction(diet.cat, extant),fill = extant), alpha = 0.7)
-
-```
-
-
-#SCAT
+##SCAT
 ```{r}
 s2 = read.delim('all_scats.txt')
 s2[is.na(s2)] = 0
@@ -1054,44 +323,7 @@ rm(list=ls(pattern="n"))
 
 ```
 
-
-
-###############3
-
-
-species -> register
-register <- sample
-registerX$species_full <- trimws(registerX$species_full, which = c("right"))
-
-
-rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
-
-
-
-for (i in nos){
-    w = which(registerX[,'sample.no'] == i)
-    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
-}
-
-
-
-
-
-
-change 0s to 0.00001s
-primatedata[which(primatedata[,14]==0, arr.ind=TRUE), 14] <- 0.00001
-
-
-put the new values in a dataframe
-
-df <- data.frame(x,y,z)
-
-
-
-Nowhere to run nowhere to hide! :D
-
-
-#Camera trap abundance calc
+##Camera trap abundance calc
 ```{r}
 
 #Pop density approximated
@@ -1128,11 +360,644 @@ register_clean$density <- round(register_clean$count/register_clean$count.per.da
 
 
 
+##Wrangle, explore and investigate
+```{r}
+require(easystats)
+require(psych)
+describe_distribution(speciesE)
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+
+
+
+data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors back with NA level to count it
+
+
+require(lattice)
+dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
+```
+
+
+#Tree wrangle
+```{r}
+require(phytools)
+require(BAMMtools)
+
+
+treeF <- read.tree("Complete_phylogeny.nex")
+rownames(speciesE) <- speciesE$species_
+
+#Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) 
+
+
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_chinga"
+sister2 <- "Conepatus_leuconotus" 
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=getmrca(tree[[i]], sister, sister2),
+    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sister, sister2)])) 
+
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) }
+
+
+grep("Martes", tree[[7]]$tip.label, value = TRUE)
+
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
+data1 <- clean$data
+
+```
+
+
+###*bad solution
+```{r}
+#adding missing species loop (bad solution with tree extraction!)
+
+#extract all trees
+treeNew <- list()
+class(treeNew) <- "multiPhylo"
+
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), tree[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+    
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+
+for (i in 1:length(tree))	{
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_leuconotus"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+
+rm(list=ls(pattern="treeX"))
+```
+
+
+#2. Load final tree and clean data
+```{r}
+require(phytools)
+require(mulTree)
+tree <- read.tree("CompletePhyCarn.txt")
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[2]]
+data <- clean$data
+
+```
+
+#Analyses
+#~Functions
+##~regress.multi.impute
+```{r}
+require(phylolm)
+
+#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
+regress.multi.impute <- function (multree, sets, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
+    a = 0 #counter for sig models
+    b = 0
+    z = matrix(ncol = length(colnames(dataX1)), nrow =sets*(to-from+1))
+    total = sets*(to - from + 1)
+    pb <- txtProgressBar(min = 0,      # Minimum value of the progress bar
+                     max = total, # Maximum value of the progress bar
+                     style = 3,    # Progress bar style (also available style = 1 and style = 2)
+                     width = 50,   # Progress bar width. Defaults to getOption("width")
+                     char = "=")   # Character used to create the bar
+    #z <- NULL
+    #z <- data.frame(matrix(ncol = 10, nrow = 10))
+# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+# (see print.pval fun) and prints them - progress is displayed
+for (i in from:to){
+for (imps in 1:sets){
+    temptree <- multree[[i]]
+    s1 <- phyloglm(model, get(paste0("dataX", imps)), temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+    b = b + 1
+    k = summary(s1)$coefficients[,3]
+    #print(k)
+    #print(length(k))
+    z[b, 1 : length(k)] = k
+    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
+    asd <- as.numeric(s2[[1]])
+    
+    for(bar in 1:b) {
+    setTxtProgressBar(pb, bar)}
+    
+    
+    if(any(asd[-1]<alpha)){
+        #print.pval(asd[-1]) 
+        a = a+1
+      cat("\n", "---------------", "\n", " N Sig models:", a, " out of", b, "", round((a/b)*100, 2), "% " ,"\n", "Models left:", (sets*(to - from + 1))-b, "\n") }
+    
+        #print(summary(s1)$coefficients[,4])
+        #print (summary(s1))
+        #print(z)
+}
+}
+    close(pb)
+    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")"," + Intercept" ))
+    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "x", sets, "=", (to - from + 1)*sets, " (trees x imputed sets)",  "\n Significant: ", a, "\n ", "p<", alpha," in ", round((a/((to - from + 1)*sets))*100, 2), "% of the tested sets", "\n ==================== \n"))
+    zvalues <<- colMeans(abs(z), na.rm=T) # z or abs z?!
+    #convert z values to p
+    cat(paste0("\n P-values \n"))
+    cat(paste0(row.names(s2)), "\n")
+    pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+        }
+#pt(zvalues, species - degs of F)
+```
+
+##RUN
+```{r}
+
+#function (multree, sets, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0)
+
+regress.multi.impute(tree, 5, extant ~ mass.g, 1, 4)
+
+```
+
+##~print p and reg multi
+```{r}
+
+print.pval <- function(x, digits = 6) {
+    sig_level <- cut(x,
+                     breaks = c(-Inf, 0, 0.0001, 0.001, 0.01, 0.05, Inf),
+                     labels = c("", "****", "***", "**", "*", ""))
+    print(paste0(signif(x, digits = digits), sig_level), quote = FALSE)
+    invisible(x)
+}
+
+#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
+regress.multi <- function (multree, data, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
+    a = 0 #counter for sig models
+# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+# (see print.pval fun) and prints them - progress is displayed
+for (i in from:to){
+    temptree <- multree[[i]]
+    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
+    asd <- as.numeric(s2[[1]])
+      if(any(asd[-1]<alpha)){
+        print.pval(asd[-1]) 
+        a = a+1
+        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+        }
+        #print(summary(s1)$coefficients[,4])
+        print (summary(s1))
+                  }
+    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
+    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
+    }
+regress.multi(tree, complete(imp, 2), extant ~ diet.cat, 1, 12)
+
+```
+
+## gls;phyloglm;rstanarm
+```{r}
+
+require(phylolm)
+require(rstanarm)
+
+
+#Non-phylo gls
+a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
+summary(a)
+
+#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
+
+#timetree phy
+tree2 <- read.newick("spcs.nwk")
+clean.data(speciesE, tree)
+
+
+aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
+aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
+aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
+aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
+
+#phylacine phy
+#treeF <- read.nexus("Complete_phylogeny.nex")
+#rownames(speciesE) <- speciesE$species_
+#clean <- clean.data(speciesE, treeF)
+#tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
+#data1 <- clean$data
+
+#check the diet var!
+#data1$diet.new <- as.factor(data1$diet.new)
+#data1$diet.new <- factor(data1$diet.new, exclude="")
+
+#USE THE MULTI.REGRESS
+
+phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
+phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
+
+#rstanarm
+
+fit_rstanarm <- stan_glm(
+    extant ~ loctype,
+    data = speciesE,
+    family = "binomial"
+)
+
+summary (fit_rstanarm)
+```
+
+
+#3. PCA + imputation
+```{r}
+
+#Load data for pc, exclude chars
+data.pc <- data[,3:15]
+rownames(data.pc) <- data$species_name
+
+
+#### Breaking down cat variables
+options(na.action='na.pass') #return NA for missing data on cat vars
+
+loctype <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"loctype"])) # break down factors into 1/0
+extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
+diet.cat <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"diet.cat"]))
+colnames(extant) <- c("Extinct0", "Extant1") #so they can be easily distinguished
+data.pc <- cbind(data.pc, diet.cat, extant, loctype)
+
+#remove old cats
+data.pc$loctype <- NULL
+data.pc$extant <- NULL
+
+
+
+#Impute data.pc
+require(mice)
+imp <- mice(data.pc, 20, maxit = 5)
+
+#run princomp on all imputed sets
+#get loadings from all imputed sets in pcSET-component
+#get scores from all imputed sets in scoresSET-component
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+#extract diet.cat
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  assign(paste0("diet.cat",imputedsets), get(paste0("dataX", imputedsets))[8]) #extract imputed diet cat
+  assign(paste0("dataX",imputedsets), get(paste0("dataX",imputedsets))[-8])   #and remove it from the set before PCA
+}
+
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+    assign(paste("PCA",imputedsets,sep=""), princomp(scale(get(paste("dataX",imputedsets, sep="")))))
+for (component in 1 : length(PCA1$loadings[,1])) {     #number of components
+      
+  assign(paste("loadings",component, "-", imputedsets, sep=""), loadings(get(paste("PCA",imputedsets, sep="")))[,component]) 
+  assign(paste("tempscores",component, "-", imputedsets, sep=""), (get(paste("PCA",imputedsets, sep=""))$scores)[,component]) 
+
+  #put all loadings and scores PER set in separate objects
+  #this works
+  
+  assign(paste0("aPC",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\bloadings", component, "\\b"))))))
+  assign(paste0("Score",component, sep=""), data.frame(do.call(cbind, mget(ls(pattern = paste0("\\btempscores", component, "\\b"))))))
+  
+  }}
 
 
 
 
 
+
+#get the means per component (both loadings and components)
+for (component in 1 : length(PCA1$loadings[,1])) {
+  
+  assign(paste0("pc.means",component, sep=""), cbind(paste0("aPC",component, sep=""), rowMeans(get(paste0("aPC",component, sep="")))))
+  assign(paste0("aPC",component, sep=""), cbind(get(paste0("pc.means",component, sep="")), get(paste0("aPC",component, sep=""))))
+  
+  assign(paste0("sc.means",component, sep=""), cbind(paste0("Score",component, sep=""), rowMeans(get(paste0("Score",component, sep="")))))
+  assign(paste0("Score",component, sep=""), cbind(get(paste0("sc.means",component, sep="")), get(paste0("Score",component, sep=""))))
+  
+  assign(paste0("aPC",component, sep=""), get(paste0("aPC",component, sep=""))[-1])
+  assign(paste0("Score",component, sep=""), get(paste0("Score",component, sep=""))[-1])
+  
+}
+
+#change rowname from 2 to mean
+
+for (i in paste0("aPC", 1:length(PCA1$loadings[,1]))){
+  d=get(i)
+  colnames(d)[1]='mean'
+  assign(i,d)
+}
+
+for (i in paste0("Score", 1:length(PCA1$loadings[,1]))){
+  d=get(i)
+  colnames(d)[1]='mean'
+  assign(i,d)
+}
+  
+#get all the means in one df
+
+MeanPC = aPC1[0:0]
+for (i in paste0("aPC", 1:length(PCA1$loadings[,1]))) {
+    m = get(i)[1]
+    MeanPC[i] <- cbind(m)
+    #assign(i, m)
+}
+MeanPC$mean <- NULL
+MeanPC <- sapply(MeanPC, as.numeric)
+MeanPC <- data.frame(MeanPC)
+rownames(MeanPC) <- rownames(aPC1)
+
+MeanS <- Score1[0:0]
+for (i in paste0("Score", 1:length(PCA1$loadings[,1]))) {
+    m = get(i)[1]
+    MeanS[i] <- cbind(m)
+    #assign(i, m)
+}
+
+MeanS <- sapply(MeanS, as.numeric)
+MeanS <- data.frame(MeanS)
+rownames(MeanS) <- data$species_name
+
+
+#add to the dataX (original imputed sets)
+
+#add loadings
+for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
+    assign(i, cbind(get(i), MeanLoadings))
+}
+
+
+for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
+
+    assign(i, get(i)[-c(11:23)])                    #remove broken down cats
+    assign(i, cbind(get(i), data[,c(5,8)]))         #add old cats
+}
+
+
+#add back the imputed diet.cat
+for(imputedsets in 1: length(imp$imp[[1]])) {
+    assign(paste0("dataX", imputedsets), cbind(get(paste0("dataX", imputedsets)), get(paste0("diet.cat",imputedsets))))  #add diet.cat back
+}
+  
+  
+#clean up    
+
+rm(list=ls(pattern="pc.means"))
+rm(list=ls(pattern="sc.means"))
+rm(list=ls(patter= "PCA"))
+#rm(list=ls(pattern="dataX"))
+rm(list=ls(pattern="aPC"))
+rm(list=ls(pattern="diet.cat"))
+rm(list=ls(pattern="loadings"))
+rm(list=ls(patter= "tempscores"))
+rm(list=ls(patter= "Score"))
+
+
+```
+
+#~Plots
+```{r}
+
+#clean <- clean.data(data, tree1)
+#tree1 <- clean$tree
+#data <- clean$data1
+
+
+#choose cols to plot
+colnames(data)
+
+#Get them by number
+#nameCol <- data.frame(colnames(data))
+#cols <- nameCol[c(4,6,8),]
+
+#Get them by name
+cols <- c("loctype","diet.new", "extant")
+
+#Fetch only the desired columns in a new df and give it row names
+data1 <- data[c(cols)]
+
+#convert vars to what they need to be - factor, numeric etc (if need be) (factors with NA level)
+data1[cols] <- lapply(data1[cols], factor, exclude="")
+
+#check if it worked
+levels(data1[,1])
+sapply(data1, class)
+
+#get 1 tree
+tree1 <- tree[[2]]
+
+require(ggtree)
+require(ggplot2)
+require(wesanderson)
+
+pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
+
+
+#tree1 <- drop.tip(tree1, "Felis_catus")
+
+
+#Circular tree with traits from data1
+circ <- ggtree(tree1, layout = "circular")
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
+
+#Visualise traits per cat
+p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label, width=.5)) + 
+    geom_tile(aes(fill=`extant`)) + scale_fill_viridis_d() + 
+    theme_minimal() + xlab(NULL) + ylab(NULL)
+
+#+ geom_tippoint(aes(color = c("a", "b")))
+
+#circ tree with offset
+circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
+
+#Tree with offset
+g <- ggtree(tree1) + geom_tiplab(align=TRUE, offset=15) + hexpand(.5)
+
+#Plot the heatmap
+p5 <- gheatmap(g, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25, colnames_position = "top")
+
+
+#grep("robustus", b, value = TRUE)
+
+
+#heatmap using ggtree
+
+p11 <- ggtree(tree[[1]]) + 
+    xlim(0, 150) +
+    geom_tiplab(size=4, offset = 35)
+
+p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
+
+#phylo.heatmap(tree,X,standardize=TRUE)
+
+
+library(aplot)
+p21 %>% insert_left(p5) %>% insert_right(p1, width=.5) 
+
+
+
+
+library(ggridges)
+ggplot(speciesE, aes(x = brain, y = extant, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C")
+
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient(stat="binline") +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+
+speciesE %>%
+     mutate(diet.cat = factor(diet.cat)) %>%
+     ggplot() +
+     geom_boxplot(aes(x = diet.cat, y = log(mass.g)))
+
+ggplot(speciesE) + 
+    geom_density_ridges(aes(x = log(mass.g), y = diet.cat, group = interaction(diet.cat, extant),fill = extant), alpha = 0.7)
+
+```
+
+##~PCA plots
+```{r}
+
+
+PCAcolors <- c("#66c2a5","#fc8d62","#8da0cb")[as.integer(data$extant)]
+
+PCAscores <- MeanS
+PCAloadings <- MeanPC    #[1:10,]
+components <- 4
+
+par(mfrow=c(4,2)) 
+for (i in 1:components){
+a=i #can fix to comp N
+b=i+1
+plot(PCAscores[,c(a,b)],  # x and y data
+     pch=21,           # point shape
+     col=PCAcolors,    # point border color
+     bg=PCAcolors,     # point color
+     cex=1.5,          # point size
+     main="Scores"     # title of plot
+)
+legend("topright",                                # position of legend
+       legend=levels(data$extant),                       # legend display
+       pch=21,                                    # point shape
+       pt.bg=c("#66c2a5","#fc8d62","#8da0cb"),    # point colors
+       pt.cex=1.5,                                # point size
+       col = c("#66c2a5","#fc8d62","#8da0cb")    # point border color
+)
+plot(PCAloadings[,c(a,b)],   # x and y data
+     pch=21,              # point shape
+     bg="black",          # point color
+     cex=1,               # point size
+     main="Loadings"      # title of plot
+)
+text(PCAloadings[,c(a,b)],             # sets position of labels
+     labels=rownames(PCAloadings)   # print labels
+)}
+
+dev.new()
+plot(PCAscores[,1:4],  # x and y data
+     pch=21,           # point shape
+     col=PCAcolors,    # point border color
+     bg=PCAcolors,     # point color
+     cex=1.5,          # point size
+     main="Scores"     # title of plot
+)
+
+```
+
+
+
+
+
+###############3
+
+
+species -> register
+register <- sample
+registerX$species_full <- trimws(registerX$species_full, which = c("right"))
+
+
+rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
+
+
+
+for (i in nos){
+    w = which(registerX[,'sample.no'] == i)
+    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
+}
+
+
+Nowhere to run nowhere to hide! :D
+
+
+#Misingness (and imputation)
+```{r}
+require(naniar)
+require(mice)
+
+gg_miss_var(speciesE)
+vis_miss(speciesE)
+
+imp <- mice(data[,3:15], 20, maxit = 10)
+
+plot(imp)
+densityplot(imp)
+stripplot(imp, pch = 20, cex = 1.2)
+
+complete(imp, 2)
+```
+
+#Path
 ```{r}
 library(phylopath)
 
