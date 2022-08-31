@@ -549,6 +549,38 @@ rm(list=ls(pattern="dataX"))
 rm(list=ls(pattern="loadings"))
 rm(list=ls(patter= "scores"))
 
+
+#get all the means in one df
+
+MeanPC <- PC1
+for (i in paste0("PC", 1:length(PCA1$loadings[,1]))) {
+    m = get(i)[1]
+    MeanPC[i] <- cbind(m)
+    #assign(i, m)
+}
+MeanPC$mean <- NULL
+
+MeanLoadings <- Score1
+for (i in paste0("Score", 1:length(PCA1$loadings[,1]))) {
+    m = get(i)[1]
+    MeanLoadings[i] <- cbind(m)
+    #assign(i, m)
+}
+
+MeanLoadings[1:6] <- NULL
+
+
+
+#add to the dataX (original imputed sets)
+
+
+for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
+    assign(i, cbind(get(i), MeanLoadings))
+}
+
+
+
+
 ```
   
 ```  
