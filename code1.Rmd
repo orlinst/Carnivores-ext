@@ -377,6 +377,25 @@ dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
 ```
 
 
+####Correlations
+```{r}
+results <- correlation(speciesE)
+summary(results)
+summary(results, redundant = TRUE)
+
+library(see)
+require(dplyr)
+
+results %>%
+  summary(redundant = TRUE) %>%
+  plot()
+
+
+
+
+```
+
+
 #Tree wrangle
 ```{r}
 require(phytools)
@@ -531,15 +550,17 @@ for (imps in 1:sets){
 }
 }
     close(pb)
-    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")"," + Intercept" ))
-    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
     cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "x", sets, "=", (to - from + 1)*sets, " (trees x imputed sets)",  "\n Significant: ", a, "\n ", "p<", alpha," in ", round((a/((to - from + 1)*sets))*100, 2), "% of the tested sets", "\n ==================== \n"))
     zvalues <<- colMeans(abs(z), na.rm=T) # z or abs z?!
     #convert z values to p
-    cat(paste0("\n P-values \n"))
-    cat(paste0(row.names(s2)), "\n")
-    pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
-        }
+    #out <- data.frame()
+    
+    #cat(paste0("\n P-values \n"))
+    vars <- row.names(s2)
+    pval <- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+    out <- data.frame(vars, pval)
+    print(out)
+    }
 #pt(zvalues, species - degs of F)
 ```
 
@@ -549,6 +570,11 @@ for (imps in 1:sets){
 #function (multree, sets, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0)
 
 regress.multi.impute(tree, 5, extant ~ mass.g, 1, 4)
+
+
+#full model with simpason/shannon
+#regress.multi.impute(tree, 10, extant ~ mass.g + home.range + brain + pc + BMR + litter + simpson + abundance + loctype + diet.cat, 1, 9)
+#pc!
 
 ```
 
@@ -665,7 +691,14 @@ data.pc$extant <- NULL
 
 #Impute data.pc
 require(mice)
-imp <- mice(data.pc, 20, maxit = 5)
+#imp <- mice(data.pc, 20, maxit = 5, method = "norm")
+
+imp <- mice(data.pc, 20, maxit = 5, method = c("cart", "pmm", "cart", "cart", "cart", "", "cart", "polyreg", "cart", "cart", "cart", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
+
+#plot(imp)
+#densityplot(imp)
+#stripplot(imp, pch = 20, cex = 1.2)
+
 
 #run princomp on all imputed sets
 #get loadings from all imputed sets in pcSET-component
@@ -760,7 +793,7 @@ rownames(MeanS) <- data$species_name
 
 #add loadings
 for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
-    assign(i, cbind(get(i), MeanLoadings))
+    assign(i, cbind(get(i), MeanS))
 }
 
 
@@ -914,9 +947,9 @@ PCAcolors <- c("#66c2a5","#fc8d62","#8da0cb")[as.integer(data$extant)]
 
 PCAscores <- MeanS
 PCAloadings <- MeanPC    #[1:10,]
-components <- 4
+components <- 3
 
-par(mfrow=c(4,2)) 
+par(mfrow=c(3,2)) 
 for (i in 1:components){
 a=i #can fix to comp N
 b=i+1
@@ -945,7 +978,7 @@ text(PCAloadings[,c(a,b)],             # sets position of labels
 )}
 
 dev.new()
-plot(PCAscores[,1:4],  # x and y data
+plot(PCAscores[,1:10],  # x and y data
      pch=21,           # point shape
      col=PCAcolors,    # point border color
      bg=PCAcolors,     # point color
