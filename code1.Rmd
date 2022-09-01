@@ -693,11 +693,14 @@ data.pc$extant <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data.pc, 20, maxit = 5, method = c("cart", "pmm", "cart", "cart", "cart", "", "cart", "polyreg", "cart", "cart", "cart", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
+imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
 
-#plot(imp)
-#densityplot(imp)
-#stripplot(imp, pch = 20, cex = 1.2)
+imp1 <- mice(data.pc, 20, maxit = 5, method = c("rf", "rf", "rf", "rf", "rf", "", "rf", "polyreg", "rf", "rf", "rf", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
+
+
+plot(imp)
+densityplot(imp)
+stripplot(imp, pch = 20, cex = 1.2)
 
 #arrange(dataX1, desc(pc))
 
@@ -733,10 +736,6 @@ for (component in 1 : length(PCA1$loadings[,1])) {     #number of components
   }}
 
 
-
-
-
-
 #get the means per component (both loadings and components)
 for (component in 1 : length(PCA1$loadings[,1])) {
   
@@ -751,7 +750,7 @@ for (component in 1 : length(PCA1$loadings[,1])) {
   
 }
 
-#change rowname from 2 to mean
+#change rowname from "2" to "mean"
 
 for (i in paste0("aPC", 1:length(PCA1$loadings[,1]))){
   d=get(i)
