@@ -1066,6 +1066,8 @@ plot(average_model, algorithm = 'mds', curvature = 0.1)
 require(semPlot)
 require(lavaan)
 
+dataX1$extant <- as.numeric(dataX1$extant)
+
 pathmodelLV <-'#path analysis
 #measurement model
 somatic=~BMR+mass.g+brain+litter
@@ -1073,12 +1075,9 @@ locomotion=~at + pc + home.range
 #regression model
 extant~somatic+locomotion'
 
-dataX1$extant <- as.numeric(dataX1$extant)
-
 fit1 <- sem(pathmodelLV, data = dataX1)
 
-summary(fit1, fit.measure=TRUE)
-semPaths(fit1, what="paths", whatLabels = "par", rotation = 2)
+
 semPaths(fit1,   title = FALSE,
          curvePivot = TRUE,
          what = "std",
@@ -1096,4 +1095,7 @@ semPaths(fit1,   title = FALSE,
          freeStyle=1,
          curvePivot = FALSE)
 
+
+summary(fit1, fit.measure=TRUE)
+semPaths(fit1, what="paths", whatLabels = "par", rotation = 2)
 ```
