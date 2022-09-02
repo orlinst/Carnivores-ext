@@ -697,7 +697,7 @@ require(mice)
 
 imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
 
-imp <- mice(data.pc, 10, maxit = 5, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
+imp <- mice(data.pc, 20, maxit = 5, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
 
 
 plot(imp)
@@ -1072,13 +1072,11 @@ dataX2$extant <- as.numeric(dataX1$extant)
 
 pathmodelLV <-'#path analysis
 #measurement model
-somatic=~BMR
-locomotion=~at + pc + home.range
+somatic=~ BMR + mass.g + brain
+locomotion=~ at + pc
 #regression model
 extant ~ locomotion + somatic
-litter ~ locomotion + somatic
-eq ~ mass.g
-mass.g ~ BMR
+#litter ~ locomotion + somatic
 '
 fit1 <- sem(pathmodelLV, data = dataX1)
 semPaths(fit1,   title = FALSE,
