@@ -678,14 +678,16 @@ rownames(data.pc) <- data$species_name
 options(na.action='na.pass') #return NA for missing data on cat vars
 
 loctype <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"loctype"])) # break down factors into 1/0
-extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
+#extant <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"extant"]))
 diet.cat <- model.matrix(~ 0 + a, data.frame(a = data.pc[,"diet.cat"]))
-colnames(extant) <- c("Extinct0", "Extant1") #so they can be easily distinguished
-data.pc <- cbind(data.pc, diet.cat, extant, loctype)
+#colnames(extant) <- c("Extinct0", "Extant1") #so they can be easily distinguished
+data.pc <- cbind(data.pc, diet.cat, loctype)
+
+#extant, 
 
 #remove old cats
 data.pc$loctype <- NULL
-data.pc$extant <- NULL
+#data.pc$extant <- NULL
 data.pc$Extant1 <- NULL
 data.pc$Extinct0 <- NULL
 
@@ -695,9 +697,13 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","", "", ""))
+imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","","",""))
 
-imp <- mice(data.pc, 20, maxit = 5, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
+imp <- mice(data.pc, 20, maxit = 20, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "polyreg", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
+
+
+save(imp, file = "imp20x100.RData")
+load("./imp20x10.Rdata")
 
 
 plot(imp)
@@ -798,12 +804,13 @@ for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
     assign(i, cbind(get(i), MeanS))
 }
 
+#data$extant <- as.numeric(data$extant) (keep the broken down?)
 
 for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
 
-    assign(i, get(i)[-c(11:21)])                    #remove broken down cats (CHECK COLS!)
-    assign(i, cbind(get(i), data[,c(5,8)]))         #add old cats
-}
+   assign(i, get(i)[-c(11:21)])                    #remove broken down cats (CHECK COLS!)
+    assign(i, cbind(get(i), data[,c(5,8)]))           #add old cats
+  }
 
 
 #add back the imputed diet.cat
@@ -1068,7 +1075,7 @@ require(semPlot)
 require(semTools)
 require(lavaan)
 
-dataX2$extant <- as.numeric(dataX1$extant)
+#dataX2$extant <- as.numeric(dataX1$extant)
 
 pathmodelLV <-'#path analysis
 #measurement model
@@ -1099,6 +1106,15 @@ summary(fit1, fit.measure=TRUE)
 #semPaths(fit1, what="paths", whatLabels = "par", rotation = 2)
 
 #SEM MI
+
+pathmodelLV <-'#path analysis
+#measurement model
+somatic=~ BMR + mass.g + brain + home.range
+locomotion =~ at + pc + abundance
+#regression model
+extant ~ locomotion + somatic
+#litter ~ locomotion + somatic
+'
 
 fit1 <- sem.mi(pathmodelLV, data = imp)
 
