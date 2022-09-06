@@ -497,6 +497,7 @@ require(mulTree)
 tree <- read.tree("CompletePhyCarn.txt")
 
 clean <- clean.data(speciesE, tree)
+tree <- clean$tree
 tree1 <- clean$tree[[2]]
 data <- clean$data
 
@@ -562,6 +563,24 @@ for (imps in 1:sets){
     print(out)
     }
 #pt(zvalues, species - degs of F)
+```
+
+
+
+##USING MIRA OBJECT
+```{r}
+for (imps in 1:20){
+    temptree <- tree[[i]]
+    model1 <- with(imp, phylolm(extant ~ mass.g, get(paste0("dataX", imps)), temptree, method = c("logistic_MPLE")))}
+
+for (imps in 1:20){
+    temptree <- tree[[i]]
+
+    as.mira(models) <- with(imp, phylolm(extant ~ mass.g, temptree, method = c("logistic_MPLE")))}
+
+
+
+pool(model1)
 ```
 
 ##RUN
