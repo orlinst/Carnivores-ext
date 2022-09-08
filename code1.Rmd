@@ -50,6 +50,17 @@ speciesE$mean.abundance <- NULL #should use median? - recode!
 speciesE$diet.new <- NULL
 
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+
+normalize <- function(x, ...) {
+    return((x - min(x, ...)) /(max(x, ...) - min(x, ...)))
+}
+
+for (i in 1:length(colnames(speciesE))){
+    if (class(speciesE[[i]]) == "numeric") 
+        speciesE[[i]] <- normalize(speciesE[[i]], na.rm = TRUE)}
+
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+
 ```
 
 ##Marking extinct vs extant
@@ -494,7 +505,8 @@ rm(list=ls(pattern="treeX"))
 ```{r}
 require(phytools)
 require(mulTree)
-tree <- read.tree("CompletePhyCarn.txt")
+#tree <- read.tree("CompletePhyCarn.txt")
+tree <- read.nexus("CompletePhyCarn.nex")
 
 clean <- clean.data(speciesE, tree)
 tree <- clean$tree
@@ -718,7 +730,7 @@ require(mice)
 
 imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","","",""))
 
-imp <- mice(data.pc, 20, maxit = 20, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "polyreg", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
+imp <- mice(data.pc, 20, maxit = 10, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "polyreg", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
 
 
 save(imp, file = "imp20x100.RData")
@@ -1099,10 +1111,10 @@ require(lavaan)
 pathmodelLV <-'#path analysis
 #measurement model
 somatic=~ BMR + mass.g + brain
-locomotion=~ at + pc
+locomotion=~ at + pc + home.range
 #regression model
 extant ~ locomotion + somatic
-#litter ~ locomotion + somatic
+litter ~ locomotion + somatic
 '
 fit1 <- sem(pathmodelLV, data = dataX1)
 semPaths(fit1,   title = FALSE,
@@ -1132,7 +1144,7 @@ somatic=~ BMR + mass.g + brain + home.range
 locomotion =~ at + pc + abundance
 #regression model
 extant ~ locomotion + somatic
-#litter ~ locomotion + somatic
+litter ~ locomotion + somatic
 '
 
 fit1 <- sem.mi(pathmodelLV, data = imp)
