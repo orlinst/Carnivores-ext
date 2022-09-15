@@ -1,115 +1,115 @@
-"species"	"species_name"	"mass.g"	"home.range"	"extant"	"brain"	"eq"	"loctype"	"pc"	"BMR"	"litter"	"diet.new"	"diet.cat"	"shannon"	"simpson"	"abundance"
-"Acinonyx jubatus"	"Acinonyx_jubatus"	41580.05916	343.2792575	1	2.05	0.75	"sc"	-1.897728423	8621.686	2.1	"carnivore"	2	0.759101095	0.42760181	0.00675295441755768
-"Ailuropoda melanoleuca"	"Ailuropoda_melanoleuca"	95800	7.1155518	1	2.37	1	"sc"	NA	8104.258016	1.5	"browser"	NA	NA	NA	0.0174738606281067
-"Aonyx capensis"	"Aonyx_capensis"	14403.2592	NA	1	1.98	1.08	"a"	0.737957729	2907.460345	3	"carninvert"	NA	NA	NA	0.00108004320172807
-"Arctictis binturong"	"Arctictis_binturong"	10246.80808	5.566985927	1	NA	NA	"a"	NA	1082.67	1.9	"frugivore"	NA	NA	NA	0.00035530830609303
-"Arctodus simus"	"Arctodus_simus"	NA	NA	0	NA	NA	"t"	NA	24907.26408	NA	""	NA	NA	NA	NA
-"Arctonyx collaris"	"Arctonyx_collaris"	NA	NA	1	NA	NA	"sf"	NA	2138.927963	3	"invertivore"	NA	NA	NA	0.00255645504899872
-"Atilax paludinosus"	"Atilax_paludinosus"	2804.394522	7.057225035	1	NA	NA	"a"	-2.543352875	1198.000017	2.5	"carninvert"	3	1.643658022	0.792762288	0.00995041213753243
-"Bassariscus astutus"	"Bassariscus_astutus"	948.6832981	3.500171424	1	1.24	1.35	"sc"	-0.780414394	369.052328	3	"invertivore"	4	1.462695856	0.71324684	0.0088160527881443
-"Brachyprotoma obtusata"	"Brachyprotoma_obtusata"	NA	NA	0	NA	NA	"t"	NA	444.6999895	NA	""	NA	NA	NA	NA
-"Canis adustus"	"Canis_adustus"	9796.958973	1.545	1	1.69	0.96	"t"	1.083180041	2360.289535	4.3	"carnivore"	NA	NA	NA	0.00756504524886878
-"Canis aureus"	"Canis_aureus"	9943.104382	0.194076446	1	1.92	1.77	"t"	0.193012673	2379.273444	6	"carnifrug"	3	1.651506308	0.778342209	0.0371676276600158
-"Canis dirus"	"Canis_dirus"	12701.15682	NA	0	NA	NA	"t"	NA	6570.20632	NA	"carnivore"	NA	NA	NA	NA
-"Canis latrans"	"Canis_latrans"	11982.11516	26.69450756	1	1.95	1.57	"t"	0.515824898	3494.527219	6	"carninvert"	2	1.105596735	0.56328971	0.0245285387841197
-"Canis lupus"	"Canis_lupus"	43361.29745	17.15756843	1	2.09	1.02	"t"	0.472377146	7760.33	6	"carnivore"	1	1.401576124	0.673374233	0.0162572927178936
-"Canis mesomelas"	"Canis_mesomelas"	7863.462837	9.318998921	1	1.73	1.21	"t"	0.515824898	3623.24	6	"carnivore"	2	0.617748122	0.272084263	0.0673483184045969
-"Caracal caracal"	"Caracal_caracal"	11565.92431	12.26372731	1	NA	NA	"sc"	-1.609524233	2582.058998	3	"carnivore"	2	0.258557112	0.118174603	0.0135356968003917
-"Cerdocyon thous"	"Cerdocyon_thous"	5193.423609	5.107773257	1	NA	NA	"t"	0.737957729	1463.158	3.1	"carnifrug"	3	1.578049823	0.737805022	0.0169335970320963
-"Civettictis civetta"	"Civettictis_civetta"	13753.15057	0.778973684	1	1.57	0.6	"t"	NA	2835.710651	NA	"frugivore"	1	1.316214629	0.623419013	0.0117183055861049
-"Conepatus chinga"	"Conepatus_chinga"	1862.821191	0.843159707	1	NA	NA	"sf"	NA	961.4805186	NA	"invertivore"	5	0.944420778	0.470110655	0.00694269123958596
-"Conepatus leuconotus"	"Conepatus_leuconotus"	1862.821191	0.894000969	1	NA	NA	"t"	2.415338522	1308.767005	3	"invertivore"	NA	NA	NA	0.00216804229584268
-"Conepatus robustus"	"Conepatus_robustus"	1862.821191	NA	0	NA	NA	"t"	NA	1776.5019	NA	"invertivore"	NA	NA	NA	NA
-"Crocuta crocuta"	"Crocuta_crocuta"	65790.29608	91.92388155	1	2.19	0.86	"t"	1.740293021	6613.304026	2	"carnivore"	2	0.15841057	0.072222222	0.0585806270996641
-"Cuon alpinus"	"Cuon_alpinus"	14290.22885	47.27374938	1	2	1.41	"t"	NA	2895.094108	5	"carnivore"	2	0	0	0.00581761273750999
-"Cynictis penicillata"	"Cynictis_penicillata"	909.8137192	0.624350665	1	0.93	0.94	"t"	3.383775199	652.481426	2.3	"carninvert"	NA	NA	NA	0
-"Dusicyon avus"	"Dusicyon_avus"	NA	NA	0	NA	NA	"t"	NA	2750.612682	NA	""	NA	NA	NA	NA
-"Felis catus"	"Felis_catus"	2908.538329	2.016674183	1	NA	NA	"sc"	NA	1845.6	NA	"carnivore"	NA	NA	NA	0.0148627333158073
-"Felis chaus"	"Felis_chaus"	5347.199054	NA	1	1.58	1.02	"sc"	-1.609524233	1700.977987	3	"carnivore"	NA	NA	NA	0.0087625452137144
-"Felis lybica"	"Felis_lybica"	2908.538329	NA	0	NA	NA	"sc"	NA	940.4849169	NA	"carnivore"	3	1.252007556	0.654134385	0.014043583535109
-"Felis nigripes"	"Felis_nigripes"	1620.741528	13.21302652	1	1.31	1.49	"sc"	0.064245143	891.7280801	2	"carnivore"	NA	NA	NA	0
-"Felis silvestris"	"Felis_silvestris"	4455.539525	10.15260665	1	1.41	0.78	"sc"	-0.375899572	453.2288928	3.3	"carnivore"	2	0.504469686	0.229840934	0.00596159801796222
-"Genetta genetta"	"Genetta_genetta"	1666.594479	2.984426055	1	1.11	0.67	"a"	NA	274.989576	2.5	"invertivore"	3	0.985825425	0.557835253	0.0555073720728534
-"Genetta tigrina"	"Genetta_tigrina"	1699.769368	NA	1	1.18	0.82	"a"	NA	731.34	NA	"carninvert"	4	2.001727125	0.813791002	0.0208429828624363
-"Gulo gulo"	"Gulo_gulo"	13179.1453	154.1884932	1	1.86	1.2	"sc"	1.702401105	5607.418	2.8	""	2	0.30893097	0.170103093	0.000551648048545028
-"Herpailurus yagouaroundi"	"Herpailurus_yagouaroundi"	5431.253469	19.01567206	1	NA	NA	"sc"	-2.543352875	1494.254003	1.9	"carnivore"	2	0.970966107	0.486263736	0.00133542905089994
-"Herpestes ichneumon"	"Herpestes_ichneumon"	2859.056888	7.8	1	NA	NA	"t"	1.147752251	1212.261263	NA	"carninvert"	3	1.752434428	0.780285148	0.0341880341880342
-"Herpestes pulverulentus"	"Herpestes_pulverulentus"	786.6023874	NA	0	NA	NA	"t"	NA	603.0840496	NA	"carninvert"	NA	NA	NA	0.0035486160397445
-"Herpestes sanguineus"	"Herpestes_sanguineus"	465.2541257	NA	1	0.94	1	"sc"	NA	379.17828	NA	"carninvert"	NA	NA	NA	0.00889102487083984
-"Hyaena hyaena"	"Hyaena_hyaena"	30090.28939	66.61644447	1	2.01	0.77	"t"	1.387542522	5497.956	2.4	"carnivore"	3	1.479504071	0.749795995	0.0343340785691472
-"Ichneumia albicauda"	"Ichneumia_albicauda"	3417.845476	0.629876519	1	NA	NA	"t"	1.387015468	1335.182125	NA	"carninvert"	NA	NA	NA	0.015857160694219
-"Ictonyx striatus"	"Ictonyx_striatus"	753.4545757	NA	1	NA	NA	"sf"	0.873274787	589.1989206	2.3	"carninvert"	NA	NA	NA	0.00361092304220266
-"Leopardus pardalis"	"Leopardus_pardalis"	8391.944072	19.58587896	1	1.77	0.97	"sc"	-2.543352875	3023.35	1.5	"carnivore"	2	1.171034848	0.576090576	0.00601142170123234
-"Leopardus wiedii"	"Leopardus_wiedii"	2554.296578	5.223450167	1	NA	NA	"a"	-1.609524233	898.64	1	"carnivore"	2	1.012260071	0.519379845	0.00185260379656888
-"Leptailurus serval"	"Leptailurus_serval"	10374.34817	NA	1	1.73	0.91	"t"	-1.609524233	3005.186	2.4	"carnivore"	2	0.408060089	0.190323903	0.0477616645649433
-"Lontra canadensis"	"Lontra_canadensis"	7107.467909	NA	1	1.72	1.06	"sa"	1.947498271	1984.089706	3	"piscivore"	3	1.135250414	0.605782127	2.25703065047623e-05
-"Lutra lutra"	"Lutra_lutra"	6148.414523	NA	1	1.56	0.82	"sa"	1.194246456	4319.208	2.5	"piscivore"	3	1.166406982	0.636060718	8.87731549979286e-05
-"Lycalopex culpaeus"	"Lycalopex_culpaeus"	8020.807878	NA	1	NA	NA	"t"	NA	1955.498	NA	"carninvert"	2	1.0164892	0.524571362	0.22897026831037
-"Lycalopex griseus"	"Lycalopex_griseus"	2610.918322	NA	1	NA	NA	"t"	NA	1154.155908	NA	"carninvert"	3	0.890959232	0.54652355	NA
-"Lycalopex gymnocercus"	"Lycalopex_gymnocercus"	5598.516187	1.235797984	1	NA	NA	"t"	NA	1743.773168	NA	"carnifrug"	4	1.505364348	0.743328128	0.0126689189189189
-"Lycalopex sechurae"	"Lycalopex_sechurae"	5377.240866	NA	0	NA	NA	"t"	NA	1499.179255	NA	"carninvert"	NA	NA	NA	NA
-"Lycaon pictus"	"Lycaon_pictus"	25819.44304	659	1	2.11	1.33	"t"	NA	5680.3608	8.8	"carnivore"	2	0.035683756	0.010476544	0
-"Lynx canadensis"	"Lynx_canadensis"	9705.222482	NA	1	1.82	1.18	"t"	-2.543352875	2356.51491	3.5	"carnivore"	NA	NA	NA	0.0179058512978443
-"Lynx lynx"	"Lynx_lynx"	16332.49293	277.7091102	1	1.93	1.04	"sc"	-2.543352875	3112.063443	2.3	"carnivore"	2	0.1554916	0.070526006	0.00816993464052288
-"Lynx pardinus"	"Lynx_pardinus"	11528.43036	NA	1	NA	NA	"sc"	-2.543352875	2519.094118	3	"carnivore"	2	0.413183715	0.220129572	NA
-"Lynx rufus"	"Lynx_rufus"	9008.932542	12.53143537	1	1.77	1.22	"sc"	-1.619794323	4051.05	2.5	"carnivore"	2	0.326660841	0.181804015	0.0081067138330017
-"Martes americana"	"Martes_americana"	946.0712952	NA	1	NA	NA	"sr"	-1.175645592	617.68116	2.6	"carnifrug"	2	0.77471458	0.392610232	0.000379218809252939
-"Martes caurina"	"Martes_caurina"	1721.289919	NA	0	NA	NA	"sr"	NA	638.3355393	NA	"carnifrug"	3	1.252848706	0.657204775	NA
-"Martes flavigula"	"Martes_flavigula"	2812.661931	8.944546853	1	NA	NA	"sc"	NA	1201.578674	2.5	"carnivore"	4	1.464231151	0.711420748	0.00561482997174315
-"Martes foina"	"Martes_foina"	1349.910447	2.480778652	1	1.23	1.04	"sc"	-1.175645592	807.7398489	3.5	"carnifrug"	4	1.321494733	0.718792697	0.015196564255038
-"Martes martes"	"Martes_martes"	1491.844451	1.394327302	1	1.27	1.45	"sr"	-1.175645592	706.484	3.3	"carnifrug"	4	1.679867075	0.784930647	0.00897129186602871
-"Martes zibellina"	"Martes_zibellina"	1721.289919	NA	1	1.27	1.32	"sc"	-1.175645592	748.942308	3	"carnifrug"	2	1.071732664	0.52459812	0.00682991837414626
-"Meles leucurus"	"Meles_leucurus"	5998.278173	1.259406372	1	NA	NA	"sf"	3.227617138	1810.069348	NA	"carnivore"	5	1.015176358	0.468649588	0.00395663574258939
-"Meles meles"	"Meles_meles"	10521.73082	1.717096428	1	1.7	0.74	"sf"	3.227617138	2863.698	3	"carnivore"	4	1.682680788	0.768139234	0.0635749879440604
-"Mellivora capensis"	"Mellivora_capensis"	7732.728836	194.5384808	1	NA	NA	"sf"	0.737957729	2076.691231	2.5	"carnivore"	3	1.499636003	0.769944341	0.00740453229032932
-"Melursus ursinus"	"Melursus_ursinus"	67052.09465	3.029678332	1	2.42	1.02	"sc"	NA	8097.798	NA	"invertivore"	5	0.371068568	0.195531307	0.0178128193896919
-"Mephitis macroura"	"Mephitis_macroura"	1008.207221	0.130983934	1	NA	NA	"t"	NA	689.7563994	5.5	"carninvert"	NA	NA	NA	0.00215726458850178
-"Mephitis mephitis"	"Mephitis_mephitis"	1480.829482	2.83889922	1	1	0.53	"t"	2.22256951	1446.906	6.8	"carninvert"	NA	NA	NA	0.00571764245153711
-"Mungos mungo"	"Mungos_mungo"	1471.196228	0.804	1	1.03	0.91	"sf"	1.740293021	846.2266259	3.8	"carninvert"	5	0.845833488	0.425695092	0.00761828388131516
-"Mustela erminea"	"Mustela_erminea"	120.9597773	0.110603565	1	0.6	0.97	"t"	-0.29761822	230.5872	4.5	"carninvert"	NA	NA	NA	0.001953125
-"Mustela eversmanii"	"Mustela_eversmanii"	214.3948411	NA	1	NA	NA	"t"	1.087241981	367.13268	6.9	"carninvert"	NA	NA	NA	NA
-"Mustela frenata"	"Mustela_frenata"	143.6295152	NA	1	0.59	0.97	"t"	1.087241981	231.27552	4.5	"carnivore"	NA	NA	NA	0.00166805671392827
-"Mustela nivalis"	"Mustela_nivalis"	77.52691772	0.20090129	1	0.35	1.07	"t"	1.30187382	178.6224816	5.8	"carnivore"	NA	NA	NA	0
-"Mustela putorius"	"Mustela_putorius"	681.2291775	1.77674893	1	0.76	0.57	"t"	0.422282239	1210.146061	6	"carnivore"	NA	NA	NA	0.000124501992031873
-"Mustela sibirica"	"Mustela_sibirica"	556.9029092	0.031712206	1	0.74	0.77	"t"	-0.115454652	500.3103548	5	"carninvert"	3	1.95552449	0.823813284	0.000394255892120896
-"Nasua nasua"	"Nasua_nasua"	4388.579501	0.319787997	1	1.53	1.3	"sc"	-1.897728423	959.824	3.5	"invertivore"	4	1.154295861	0.625243742	0.00490079392861644
-"Nasuella olivacea"	"Nasuella_olivacea"	NA	NA	1	NA	NA	"sa"	NA	804.5229507	NA	""	NA	NA	NA	0.0010183299389002
-"Neovison vison"	"Neovison_vison"	913.0337916	0.902269988	1	0.85	0.72	"sa"	-0.29761822	468.40176	5	""	NA	NA	NA	0.000149521531100478
-"Nyctereutes procyonoides"	"Nyctereutes_procyonoides"	4203.627705	2.745330891	1	1.45	0.89	"t"	1.85123235	2913.41	6	"invertivore"	4	1.578785832	0.723348683	0.0115677321156773
-"Otocyon megalotis"	"Otocyon_megalotis"	3249.352059	4.73974872	1	1.47	0.91	"t"	1.267766937	1299.158941	3.5	"frugivore"	5	0	0	0.00991821820080042
-"Panthera atrox"	"Panthera_atrox"	61616.89061	NA	0	NA	NA	"t"	NA	13782.72333	NA	"carnivore"	NA	NA	NA	NA
-"Panthera leo"	"Panthera_leo"	147353.6049	669.2561157	1	2.34	0.74	"sc"	-1.574916198	16273.032	2.5	"carnivore"	2	0	0	0.0030987969376595
-"Panthera onca"	"Panthera_onca"	65406.10817	89.50359505	1	2.17	0.68	"sc"	-2.543352875	10739.226	2	"carnivore"	2	0.202434993	0.083901293	0.00533399609987382
-"Panthera pardus"	"Panthera_pardus"	32655.3998	30.01405621	1	2.25	1.47	"sc"	-2.543352875	4508.304004	2.6	"carnivore"	2	0.061894137	0.019559548	0.0105275717747265
-"Panthera spelaea"	"Panthera_spelaea"	61616.89061	NA	0	NA	NA	"t"	NA	16094.41635	NA	"carnivore"	NA	NA	NA	NA
-"Panthera tigris"	"Panthera_tigris"	167650.47	153.842924	1	2.39	0.81	"t"	-2.543352875	23030.518	2.65	"carnivore"	2	0.064581436	0.023809524	0.00862949926195072
-"Parahyaena brunnea"	"Parahyaena_brunnea"	48006.18604	NA	0	NA	NA	"t"	NA	231.27552	NA	""	NA	NA	NA	0.0314410480349345
-"Pekania pennanti"	"Martes_pennanti"	3815.231188	NA	1	NA	NA	"sc"	NA	1417.045181	NA	""	3	1.554978991	0.754030878	0.00304864258510417
-"Potos flavus"	"Potos_flavus"	1739.89543	0.263666456	1	1.42	1.04	"a"	NA	727.994	1.5	"frugivore"	1	0.194406677	0.077939698	0.000754906894816306
-"Prionailurus bengalensis"	"Prionailurus_bengalensis"	3376.331132	4.740099529	1	NA	NA	"sc"	-2.543352875	1326.383649	2.5	"carnivore"	2	1.368868045	0.651593454	0.0056478608866139
-"Procyon cancrivorus"	"Procyon_cancrivorus"	4995.650575	0.793246828	1	NA	NA	"sc"	NA	445.496	NA	"carnifrug"	4	1.410534009	0.67384269	0.0017901541521631
-"Procyon lotor"	"Procyon_lotor"	5493.094685	2.087122025	1	1.62	1.06	"sc"	NA	2096.986	3.8	"carnifrug"	4	1.711779993	0.789794603	0.060189653323529
-"Proteles cristata"	"Proteles_cristata"	9119.90698	3.8	1	1.6	0.75	"t"	0.387057368	2099.376	2.8	"invertivore"	5	0.165443496	0.075652308	0.00445590994371482
-"Puma concolor"	"Puma_concolor"	48721.38099	179.26253	1	2.06	0.78	"sc"	-2.543352875	8497.884	2.8	"carnivore"	2	0.017145456	0.004889976	0.00322572219610301
-"Smilodon fatalis"	"Smilodon_fatalis"	NA	NA	0	NA	NA	"t"	NA	12675.88456	NA	""	NA	NA	NA	NA
-"Smilodon populator"	"Smilodon_populator"	NA	NA	0	NA	NA	"t"	NA	14879.0227	NA	""	NA	NA	NA	NA
-"Spilogale gracilis"	"Spilogale_gracilis"	632.759881	NA	1	NA	NA	"t"	NA	507.3687852	3.8	"carninvert"	NA	NA	NA	0.00318471337579618
-"Spilogale putorius"	"Spilogale_putorius"	632.759881	1.217826473	1	0.7	0.8	"t"	NA	288.06192	5.5	"carninvert"	NA	NA	NA	0.000300842358604091
-"Suricata suricatta"	"Suricata_suricatta"	662.8601502	NA	0	1.01	0.98	"sf"	2.935270239	297.52632	NA	"carninvert"	NA	NA	NA	NA
-"Taxidea taxus"	"Taxidea_taxus"	7027.595972	8.4984	1	1.75	1.17	"sf"	2.415338522	2591.716	4	"carnivore"	2	0.866411914	0.452512705	0.00195444129936649
-"Tremarctos floridanus"	"Tremarctos_floridanus"	NA	NA	0	NA	NA	"t"	NA	12862.603	NA	"browser"	NA	NA	NA	NA
-"Tremarctos ornatus"	"Tremarctos_ornatus"	NA	NA	1	NA	NA	"sc"	NA	9284.789213	NA	"browser"	1	0.959633377	0.513114754	0.00301709688233322
-"Urocyon cinereoargenteus"	"Urocyon_cinereoargenteus"	4072.895414	1.028746475	1	1.55	1.12	"a"	-0.852833366	1468.043251	3.8	"frugcarn"	1	0.973459707	0.526610644	0.0201104875865231
-"Ursus americanus"	"Ursus_americanus"	114572.4693	58.79965858	1	2.36	0.99	"sc"	0.065825831	14666.952	2.5	"browser"	1	1.591866638	0.735632184	0.0305305268431406
-"Ursus arctos"	"Ursus_arctos"	155513.7946	29.6965461	1	2.53	0.89	"sc"	0.42577606	18928.322	2.5	"frugcarn"	1	1.404022792	0.6863711	0.00847395984870527
-"Ursus maritimus"	"Ursus_maritimus"	100429.6113	NA	1	2.56	0.84	"t"	0.114743364	21407.708	1.9	"browser"	NA	NA	NA	NA
-"Ursus spelaeus"	"Ursus_spelaeus"	100429.6113	NA	0	NA	NA	"t"	NA	15026.44807	NA	"browser"	NA	NA	NA	NA
-"Ursus thibetanus"	"Ursus_thibetanus"	62755.24396	47.31325165	1	NA	NA	"t"	NA	6446.461526	2	"browser"	1	0.381016245	0.198709987	0.00326194282490126
-"Urva edwardsii"	"Herpestes_edwardsii"	NA	NA	0	NA	NA	"t"	NA	468.40176	NA	""	NA	NA	NA	0.00394331484904498
-"Vulpes chama"	"Vulpes_chama"	2738.889285	27.68	1	NA	NA	"t"	1.138658708	1184.42429	4	"carnifrug"	2	1.155845437	0.557032115	0.0051762385999507
-"Vulpes corsac"	"Vulpes_corsac"	3564.036496	NA	1	NA	NA	"t"	1.855767147	1155.210567	5.5	"carnifrug"	NA	NA	NA	NA
-"Vulpes lagopus"	"Vulpes_lagopus"	3314.220013	NA	1	1.61	1.43	"t"	NA	1318.9932	6	"carnifrug"	NA	NA	NA	NA
-"Vulpes macrotis"	"Vulpes_macrotis"	1436.118992	NA	1	NA	NA	"t"	NA	900.074	4.5	"carnifrug"	3	1.419119398	0.700352298	0.0265514532600157
-"Vulpes rueppellii"	"Vulpes_rueppellii"	3564.036496	NA	0	1.39	1.41	"t"	NA	767.19	NA	"carnifrug"	NA	NA	NA	NA
-"Vulpes velox"	"Vulpes_velox"	2353.061344	NA	1	1.48	1.34	"t"	1.947688352	851.45184	4.5	"carnivore"	NA	NA	NA	NA
-"Vulpes vulpes"	"Vulpes_vulpes"	5327.374282	2.218405492	1	1.61	1.24	"t"	1.419210745	1442.126	6	"carnivore"	3	1.413079627	0.714349779	0.0156824948235515
+species	species_name	mass.g	home.range	extant	brain	eq	loctype	pc	BMR	litter	diet.new	diet.cat	shannon	simpson	abundance	longevity
+Acinonyx jubatus	Acinonyx_jubatus	41580.05916	343.2792575	1	2.05	0.75	sc	-1.897728423	8621.686	2.1	carnivore	2	0.759101095	0.42760181	0.006752954	20.5
+Ailuropoda melanoleuca	Ailuropoda_melanoleuca	95800	7.1155518	1	2.37	1	sc	NA	8104.258016	1.5	browser	NA	NA	NA	0.017473861	36.8
+Aonyx capensis	Aonyx_capensis	14403.2592	NA	1	1.98	1.08	a	0.737957729	2907.460345	3	carninvert	NA	NA	NA	0.001080043	14.1
+Arctictis binturong	Arctictis_binturong	10246.80808	5.566985927	1	NA	NA	a	NA	1082.67	1.9	frugivore	NA	NA	NA	0.000355308	NA
+Arctodus simus	Arctodus_simus	NA	NA	0	NA	NA	t	NA	24907.26408	NA		NA	NA	NA	NA	NA
+Arctonyx collaris	Arctonyx_collaris	NA	NA	1	NA	NA	sf	NA	2138.927963	3	invertivore	NA	NA	NA	0.002556455	NA
+Atilax paludinosus	Atilax_paludinosus	2804.394522	7.057225035	1	NA	NA	a	-2.543352875	1198.000017	2.5	carninvert	3	1.643658022	0.792762288	0.009950412	NA
+Bassariscus astutus	Bassariscus_astutus	948.6832981	3.500171424	1	1.24	1.35	sc	-0.780414394	369.052328	3	invertivore	4	1.462695856	0.71324684	0.008816053	19
+Brachyprotoma obtusata	Brachyprotoma_obtusata	NA	NA	0	NA	NA	t	NA	444.6999895	NA		NA	NA	NA	NA	NA
+Canis adustus	Canis_adustus	9796.958973	1.545	1	1.69	0.96	t	1.083180041	2360.289535	4.3	carnivore	NA	NA	NA	0.007565045	18.8
+Canis aureus	Canis_aureus	9943.104382	0.194076446	1	1.92	1.77	t	0.193012673	2379.273444	6	carnifrug	3	1.651506308	0.778342209	0.037167628	18.8
+Canis dirus	Canis_dirus	12701.15682	NA	0	NA	NA	t	NA	6570.20632	NA	carnivore	NA	NA	NA	NA	NA
+Canis latrans	Canis_latrans	11982.11516	26.69450756	1	1.95	1.57	t	0.515824898	3494.527219	6	carninvert	2	1.105596735	0.56328971	0.024528539	21.8
+Canis lupus	Canis_lupus	43361.29745	17.15756843	1	2.09	1.02	t	0.472377146	7760.33	6	carnivore	1	1.401576124	0.673374233	0.016257293	20.6
+Canis mesomelas	Canis_mesomelas	7863.462837	9.318998921	1	1.73	1.21	t	0.515824898	3623.24	6	carnivore	2	0.617748122	0.272084263	0.067348318	16.7
+Caracal caracal	Caracal_caracal	11565.92431	12.26372731	1	NA	NA	sc	-1.609524233	2582.058998	3	carnivore	2	0.258557112	0.118174603	0.013535697	NA
+Cerdocyon thous	Cerdocyon_thous	5193.423609	5.107773257	1	NA	NA	t	0.737957729	1463.158	3.1	carnifrug	3	1.578049823	0.737805022	0.016933597	NA
+Civettictis civetta	Civettictis_civetta	13753.15057	0.778973684	1	1.57	0.6	t	NA	2835.710651	NA	frugivore	1	1.316214629	0.623419013	0.011718306	28
+Conepatus chinga	Conepatus_chinga	1862.821191	0.843159707	1	NA	NA	sf	NA	961.4805186	NA	invertivore	5	0.944420778	0.470110655	0.006942691	NA
+Conepatus leuconotus	Conepatus_leuconotus	1862.821191	0.894000969	1	NA	NA	t	2.415338522	1308.767005	3	invertivore	NA	NA	NA	0.002168042	NA
+Conepatus robustus	Conepatus_robustus	1862.821191	NA	0	NA	NA	t	NA	1776.5019	NA	invertivore	NA	NA	NA	NA	NA
+Crocuta crocuta	Crocuta_crocuta	65790.29608	91.92388155	1	2.19	0.86	t	1.740293021	6613.304026	2	carnivore	2	0.15841057	0.072222222	0.058580627	41.1
+Cuon alpinus	Cuon_alpinus	14290.22885	47.27374938	1	2	1.41	t	NA	2895.094108	5	carnivore	2	0	0	0.005817613	16.1
+Cynictis penicillata	Cynictis_penicillata	909.8137192	0.624350665	1	0.93	0.94	t	3.383775199	652.481426	2.3	carninvert	NA	NA	NA	0	15.2
+Dusicyon avus	Dusicyon_avus	NA	NA	0	NA	NA	t	NA	2750.612682	NA		NA	NA	NA	NA	NA
+Felis catus	Felis_catus	2908.538329	2.016674183	1	NA	NA	sc	NA	1845.6	NA	carnivore	NA	NA	NA	0.014862733	NA
+Felis chaus	Felis_chaus	5347.199054	NA	1	1.58	1.02	sc	-1.609524233	1700.977987	3	carnivore	NA	NA	NA	0.008762545	20
+Felis lybica	Felis_lybica	2908.538329	NA	0	NA	NA	sc	NA	940.4849169	NA	carnivore	3	1.252007556	0.654134385	0.014043584	NA
+Felis nigripes	Felis_nigripes	1620.741528	13.21302652	1	1.31	1.49	sc	0.064245143	891.7280801	2	carnivore	NA	NA	NA	0	15.6
+Felis silvestris	Felis_silvestris	4455.539525	10.15260665	1	1.41	0.78	sc	-0.375899572	453.2288928	3.3	carnivore	2	0.504469686	0.229840934	0.005961598	19
+Genetta genetta	Genetta_genetta	1666.594479	2.984426055	1	1.11	0.67	a	NA	274.989576	2.5	invertivore	3	0.985825425	0.557835253	0.055507372	22.7
+Genetta tigrina	Genetta_tigrina	1699.769368	NA	1	1.18	0.82	a	NA	731.34	NA	carninvert	4	2.001727125	0.813791002	0.020842983	21.3
+Gulo gulo	Gulo_gulo	13179.1453	154.1884932	1	1.86	1.2	sc	1.702401105	5607.418	2.8		2	0.30893097	0.170103093	0.000551648	19.5
+Herpailurus yagouaroundi	Herpailurus_yagouaroundi	5431.253469	19.01567206	1	NA	NA	sc	-2.543352875	1494.254003	1.9	carnivore	2	0.970966107	0.486263736	0.001335429	NA
+Herpestes ichneumon	Herpestes_ichneumon	2859.056888	7.8	1	NA	NA	t	1.147752251	1212.261263	NA	carninvert	3	1.752434428	0.780285148	0.034188034	NA
+Herpestes pulverulentus	Herpestes_pulverulentus	786.6023874	NA	0	NA	NA	t	NA	603.0840496	NA	carninvert	NA	NA	NA	0.003548616	NA
+Herpestes sanguineus	Herpestes_sanguineus	465.2541257	NA	1	0.94	1	sc	NA	379.17828	NA	carninvert	NA	NA	NA	0.008891025	12.6
+Hyaena hyaena	Hyaena_hyaena	30090.28939	66.61644447	1	2.01	0.77	t	1.387542522	5497.956	2.4	carnivore	3	1.479504071	0.749795995	0.034334079	25
+Ichneumia albicauda	Ichneumia_albicauda	3417.845476	0.629876519	1	NA	NA	t	1.387015468	1335.182125	NA	carninvert	NA	NA	NA	0.015857161	NA
+Ictonyx striatus	Ictonyx_striatus	753.4545757	NA	1	NA	NA	sf	0.873274787	589.1989206	2.3	carninvert	NA	NA	NA	0.003610923	NA
+Leopardus pardalis	Leopardus_pardalis	8391.944072	19.58587896	1	1.77	0.97	sc	-2.543352875	3023.35	1.5	carnivore	2	1.171034848	0.576090576	0.006011422	28.2
+Leopardus wiedii	Leopardus_wiedii	2554.296578	5.223450167	1	NA	NA	a	-1.609524233	898.64	1	carnivore	2	1.012260071	0.519379845	0.001852604	NA
+Leptailurus serval	Leptailurus_serval	10374.34817	NA	1	1.73	0.91	t	-1.609524233	3005.186	2.4	carnivore	2	0.408060089	0.190323903	0.047761665	22.4
+Lontra canadensis	Lontra_canadensis	7107.467909	NA	1	1.72	1.06	sa	1.947498271	1984.089706	3	piscivore	3	1.135250414	0.605782127	2.26E-05	26.5
+Lutra lutra	Lutra_lutra	6148.414523	NA	1	1.56	0.82	sa	1.194246456	4319.208	2.5	piscivore	3	1.166406982	0.636060718	8.88E-05	18.2
+Lycalopex culpaeus	Lycalopex_culpaeus	8020.807878	NA	1	NA	NA	t	NA	1955.498	NA	carninvert	2	1.0164892	0.524571362	0.228970268	NA
+Lycalopex griseus	Lycalopex_griseus	2610.918322	NA	1	NA	NA	t	NA	1154.155908	NA	carninvert	3	0.890959232	0.54652355	NA	NA
+Lycalopex gymnocercus	Lycalopex_gymnocercus	5598.516187	1.235797984	1	NA	NA	t	NA	1743.773168	NA	carnifrug	4	1.505364348	0.743328128	0.012668919	NA
+Lycalopex sechurae	Lycalopex_sechurae	5377.240866	NA	0	NA	NA	t	NA	1499.179255	NA	carninvert	NA	NA	NA	NA	NA
+Lycaon pictus	Lycaon_pictus	25819.44304	659	1	2.11	1.33	t	NA	5680.3608	8.8	carnivore	2	0.035683756	0.010476544	0	15.1
+Lynx canadensis	Lynx_canadensis	9705.222482	NA	1	1.82	1.18	t	-2.543352875	2356.51491	3.5	carnivore	NA	NA	NA	0.017905851	26.8
+Lynx lynx	Lynx_lynx	16332.49293	277.7091102	1	1.93	1.04	sc	-2.543352875	3112.063443	2.3	carnivore	2	0.1554916	0.070526006	0.008169935	23.7
+Lynx pardinus	Lynx_pardinus	11528.43036	NA	1	NA	NA	sc	-2.543352875	2519.094118	3	carnivore	2	0.413183715	0.220129572	NA	NA
+Lynx rufus	Lynx_rufus	9008.932542	12.53143537	1	1.77	1.22	sc	-1.619794323	4051.05	2.5	carnivore	2	0.326660841	0.181804015	0.008106714	32.3
+Martes americana	Martes_americana	946.0712952	NA	1	NA	NA	sr	-1.175645592	617.68116	2.6	carnifrug	2	0.77471458	0.392610232	0.000379219	NA
+Martes caurina	Martes_caurina	1721.289919	NA	0	NA	NA	sr	NA	638.3355393	NA	carnifrug	3	1.252848706	0.657204775	NA	NA
+Martes flavigula	Martes_flavigula	2812.661931	8.944546853	1	NA	NA	sc	NA	1201.578674	2.5	carnivore	4	1.464231151	0.711420748	0.00561483	NA
+Martes foina	Martes_foina	1349.910447	2.480778652	1	1.23	1.04	sc	-1.175645592	807.7398489	3.5	carnifrug	4	1.321494733	0.718792697	0.015196564	18.2
+Martes martes	Martes_martes	1491.844451	1.394327302	1	1.27	1.45	sr	-1.175645592	706.484	3.3	carnifrug	4	1.679867075	0.784930647	0.008971292	18.2
+Martes zibellina	Martes_zibellina	1721.289919	NA	1	1.27	1.32	sc	-1.175645592	748.942308	3	carnifrug	2	1.071732664	0.52459812	0.006829918	18.4
+Meles leucurus	Meles_leucurus	5998.278173	1.259406372	1	NA	NA	sf	3.227617138	1810.069348	NA	carnivore	5	1.015176358	0.468649588	0.003956636	NA
+Meles meles	Meles_meles	10521.73082	1.717096428	1	1.7	0.74	sf	3.227617138	2863.698	3	carnivore	4	1.682680788	0.768139234	0.063574988	18.6
+Mellivora capensis	Mellivora_capensis	7732.728836	194.5384808	1	NA	NA	sf	0.737957729	2076.691231	2.5	carnivore	3	1.499636003	0.769944341	0.007404532	NA
+Melursus ursinus	Melursus_ursinus	67052.09465	3.029678332	1	2.42	1.02	sc	NA	8097.798	NA	invertivore	5	0.371068568	0.195531307	0.017812819	33.3
+Mephitis macroura	Mephitis_macroura	1008.207221	0.130983934	1	NA	NA	t	NA	689.7563994	5.5	carninvert	NA	NA	NA	0.002157265	NA
+Mephitis mephitis	Mephitis_mephitis	1480.829482	2.83889922	1	1	0.53	t	2.22256951	1446.906	6.8	carninvert	NA	NA	NA	0.005717642	13.9
+Mungos mungo	Mungos_mungo	1471.196228	0.804	1	1.03	0.91	sf	1.740293021	846.2266259	3.8	carninvert	5	0.845833488	0.425695092	0.007618284	17.4
+Mustela erminea	Mustela_erminea	120.9597773	0.110603565	1	0.6	0.97	t	-0.29761822	230.5872	4.5	carninvert	NA	NA	NA	0.001953125	12.5
+Mustela eversmanii	Mustela_eversmanii	214.3948411	NA	1	NA	NA	t	1.087241981	367.13268	6.9	carninvert	NA	NA	NA	NA	NA
+Mustela frenata	Mustela_frenata	143.6295152	NA	1	0.59	0.97	t	1.087241981	231.27552	4.5	carnivore	NA	NA	NA	0.001668057	8.8
+Mustela nivalis	Mustela_nivalis	77.52691772	0.20090129	1	0.35	1.07	t	1.30187382	178.6224816	5.8	carnivore	NA	NA	NA	0	9.1
+Mustela putorius	Mustela_putorius	681.2291775	1.77674893	1	0.76	0.57	t	0.422282239	1210.146061	6	carnivore	NA	NA	NA	0.000124502	11.1
+Mustela sibirica	Mustela_sibirica	556.9029092	0.031712206	1	0.74	0.77	t	-0.115454652	500.3103548	5	carninvert	3	1.95552449	0.823813284	0.000394256	8.8
+Nasua nasua	Nasua_nasua	4388.579501	0.319787997	1	1.53	1.3	sc	-1.897728423	959.824	3.5	invertivore	4	1.154295861	0.625243742	0.004900794	23.7
+Nasuella olivacea	Nasuella_olivacea	NA	NA	1	NA	NA	sa	NA	804.5229507	NA		NA	NA	NA	0.00101833	NA
+Neovison vison	Neovison_vison	913.0337916	0.902269988	1	0.85	0.72	sa	-0.29761822	468.40176	5		NA	NA	NA	0.000149522	11.4
+Nyctereutes procyonoides	Nyctereutes_procyonoides	4203.627705	2.745330891	1	1.45	0.89	t	1.85123235	2913.41	6	invertivore	4	1.578785832	0.723348683	0.011567732	16.6
+Otocyon megalotis	Otocyon_megalotis	3249.352059	4.73974872	1	1.47	0.91	t	1.267766937	1299.158941	3.5	frugivore	5	0	0	0.009918218	17
+Panthera atrox	Panthera_atrox	61616.89061	NA	0	NA	NA	t	NA	13782.72333	NA	carnivore	NA	NA	NA	NA	NA
+Panthera leo	Panthera_leo	147353.6049	669.2561157	1	2.34	0.74	sc	-1.574916198	16273.032	2.5	carnivore	2	0	0	0.003098797	27
+Panthera onca	Panthera_onca	65406.10817	89.50359505	1	2.17	0.68	sc	-2.543352875	10739.226	2	carnivore	2	0.202434993	0.083901293	0.005333996	28
+Panthera pardus	Panthera_pardus	32655.3998	30.01405621	1	2.25	1.47	sc	-2.543352875	4508.304004	2.6	carnivore	2	0.061894137	0.019559548	0.010527572	27.3
+Panthera spelaea	Panthera_spelaea	61616.89061	NA	0	NA	NA	t	NA	16094.41635	NA	carnivore	NA	NA	NA	NA	NA
+Panthera tigris	Panthera_tigris	167650.47	153.842924	1	2.39	0.81	t	-2.543352875	23030.518	2.65	carnivore	2	0.064581436	0.023809524	0.008629499	26.3
+Parahyaena brunnea	Parahyaena_brunnea	48006.18604	NA	0	NA	NA	t	NA	231.27552	NA		NA	NA	NA	0.031441048	NA
+Pekania pennanti	Martes_pennanti	3815.231188	NA	1	1.48	1.36	sc	NA	1417.045181	2.92	carnivore	3	1.554978991	0.754030878	0.003048643	14.3
+Potos flavus	Potos_flavus	1739.89543	0.263666456	1	1.42	1.04	a	NA	727.994	1.5	frugivore	1	0.194406677	0.077939698	0.000754907	38.4
+Prionailurus bengalensis	Prionailurus_bengalensis	3376.331132	4.740099529	1	NA	NA	sc	-2.543352875	1326.383649	2.5	carnivore	2	1.368868045	0.651593454	0.005647861	NA
+Procyon cancrivorus	Procyon_cancrivorus	4995.650575	0.793246828	1	NA	NA	sc	NA	445.496	NA	carnifrug	4	1.410534009	0.67384269	0.001790154	NA
+Procyon lotor	Procyon_lotor	5493.094685	2.087122025	1	1.62	1.06	sc	NA	2096.986	3.8	carnifrug	4	1.711779993	0.789794603	0.060189653	21
+Proteles cristata	Proteles_cristata	9119.90698	3.8	1	1.6	0.75	t	0.387057368	2099.376	2.8	invertivore	5	0.165443496	0.075652308	0.00445591	20
+Puma concolor	Puma_concolor	48721.38099	179.26253	1	2.06	0.78	sc	-2.543352875	8497.884	2.8	carnivore	2	0.017145456	0.004889976	0.003225722	23.8
+Smilodon fatalis	Smilodon_fatalis	NA	NA	0	NA	NA	t	NA	12675.88456	NA		NA	NA	NA	NA	NA
+Smilodon populator	Smilodon_populator	NA	NA	0	NA	NA	t	NA	14879.0227	NA		NA	NA	NA	NA	NA
+Spilogale gracilis	Spilogale_gracilis	632.759881	NA	1	NA	NA	t	NA	507.3687852	3.8	carninvert	NA	NA	NA	0.003184713	NA
+Spilogale putorius	Spilogale_putorius	632.759881	1.217826473	1	0.7	0.8	t	NA	288.06192	5.5	carninvert	NA	NA	NA	0.000300842	10.5
+Suricata suricatta	Suricata_suricatta	662.8601502	NA	0	1.01	0.98	sf	2.935270239	297.52632	NA	carninvert	NA	NA	NA	NA	20.6
+Taxidea taxus	Taxidea_taxus	7027.595972	8.4984	1	1.75	1.17	sf	2.415338522	2591.716	4	carnivore	2	0.866411914	0.452512705	0.001954441	25
+Tremarctos floridanus	Tremarctos_floridanus	NA	NA	0	NA	NA	t	NA	12862.603	NA	browser	NA	NA	NA	NA	NA
+Tremarctos ornatus	Tremarctos_ornatus	NA	NA	1	NA	NA	sc	NA	9284.789213	NA	browser	1	0.959633377	0.513114754	0.003017097	NA
+Urocyon cinereoargenteus	Urocyon_cinereoargenteus	4072.895414	1.028746475	1	1.55	1.12	a	-0.852833366	1468.043251	3.8	frugcarn	1	0.973459707	0.526610644	0.020110488	16.2
+Ursus americanus	Ursus_americanus	114572.4693	58.79965858	1	2.36	0.99	sc	0.065825831	14666.952	2.5	browser	1	1.591866638	0.735632184	0.030530527	34
+Ursus arctos	Ursus_arctos	155513.7946	29.6965461	1	2.53	0.89	sc	0.42577606	18928.322	2.5	frugcarn	1	1.404022792	0.6863711	0.00847396	40
+Ursus maritimus	Ursus_maritimus	100429.6113	NA	1	2.56	0.84	t	0.114743364	21407.708	1.9	browser	NA	NA	NA	NA	43.8
+Ursus spelaeus	Ursus_spelaeus	100429.6113	NA	0	NA	NA	t	NA	15026.44807	NA	browser	NA	NA	NA	NA	NA
+Ursus thibetanus	Ursus_thibetanus	62755.24396	47.31325165	1	NA	NA	t	NA	6446.461526	2	browser	1	0.381016245	0.198709987	0.003261943	NA
+Urva edwardsii	Herpestes_edwardsii	NA	NA	0	NA	NA	t	NA	468.40176	NA		NA	NA	NA	0.003943315	NA
+Vulpes chama	Vulpes_chama	2738.889285	27.68	1	NA	NA	t	1.138658708	1184.42429	4	carnifrug	2	1.155845437	0.557032115	0.005176239	NA
+Vulpes corsac	Vulpes_corsac	3564.036496	NA	1	NA	NA	t	1.855767147	1155.210567	5.5	carnifrug	NA	NA	NA	NA	NA
+Vulpes lagopus	Vulpes_lagopus	3314.220013	NA	1	1.61	1.43	t	NA	1318.9932	6	carnifrug	NA	NA	NA	NA	16.3
+Vulpes macrotis	Vulpes_macrotis	1436.118992	NA	1	NA	NA	t	NA	900.074	4.5	carnifrug	3	1.419119398	0.700352298	0.026551453	NA
+Vulpes rueppellii	Vulpes_rueppellii	3564.036496	NA	0	1.39	1.41	t	NA	767.19	NA	carnifrug	NA	NA	NA	NA	14.3
+Vulpes velox	Vulpes_velox	2353.061344	NA	1	1.48	1.34	t	1.947688352	851.45184	4.5	carnivore	NA	NA	NA	NA	15.9
+Vulpes vulpes	Vulpes_vulpes	5327.374282	2.218405492	1	1.61	1.24	t	1.419210745	1442.126	6	carnivore	3	1.413079627	0.714349779	0.015682495	21.3

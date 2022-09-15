@@ -8,7 +8,7 @@ date: '2022-07-20'
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#1. Load data
+#1. Load data and prep the dataset
 ```{r}
 require(psych)
 
@@ -24,19 +24,20 @@ speciesE$diet.cat <- as.factor(speciesE$diet.cat)
 
 #remove NA level from diet
 #speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
-#speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
+
 
 #Log vars
 require(VGAM)
 
-speciesE$simpson[23] <- NA
-speciesE$simpson[78] <- NA
-speciesE$simpson[80] <- NA
+#speciesE$simpson[23] <- NA
+#speciesE$simpson[78] <- NA
+#speciesE$simpson[80] <- NA
 
+#Log what needs to be logged
 speciesE$mass.g <- log(speciesE$mass.g)
 speciesE$home.range <- log(speciesE$home.range)
 speciesE$BMR <- log(speciesE$BMR)
-speciesE$simpson <- log(1/speciesE$simpson)
+speciesE$simpson <- log(1/(speciesE$simpson+0.00000001))
 
 
 yj <- function (y) {((y+1)^0.0001 - 1) / 0.0001}
@@ -46,7 +47,6 @@ speciesE$abundance[a] <- a1[a] #transform Yeo–Johnson
 
 
 #do we need these?
-speciesE$mean.abundance <- NULL #should use median? - recode!
 speciesE$diet.new <- NULL
 
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
@@ -59,7 +59,9 @@ for (i in 1:length(colnames(speciesE))){
     if (class(speciesE[[i]]) == "numeric") 
         speciesE[[i]] <- normalize(speciesE[[i]], na.rm = TRUE)}
 
-multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F)
+
+write.table(speciesE, "carn-ext.txt", sep = "\t", row.names = FALSE)
 
 ```
 
@@ -87,7 +89,7 @@ speciesE$extant[is.na(speciesE$extant)] <- 0
 ```
 
 
-#Add data from other datasets
+##Add data from other datasets
 ```{r}
 
 #HELBSTAB
@@ -112,7 +114,7 @@ sum(names(table(speciesH)) %in% names(table(species$V1)))
 m1 <- match(speciesE$species, speciesH)
 speciesE$brain <- X_helbstab_journal_pone_0261185_s005$`Log ECV`[m1]
 speciesE$EQ <- X_helbstab_journal_pone_0261185_s005$`Encephalization quotient (EQ)`[m1]
-
+speciesE$longevity <- X_helbstab_journal_pone_0261185_s005$`Maximum longevity (years)`[m1]
 #write to main data set
 write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
 
@@ -371,7 +373,7 @@ register_clean$density <- round(register_clean$count/register_clean$count.per.da
 
 
 
-##Wrangle, explore and investigate
+#Wrangle, explore and investigate
 ```{r}
 require(easystats)
 require(psych)
@@ -388,20 +390,19 @@ dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
 ```
 
 
-####Correlations
+#Correlations
 ```{r}
+require(see)
+require(dplyr)
+require(easystats)
+
 results <- correlation(speciesE)
 summary(results)
 summary(results, redundant = TRUE)
 
-library(see)
-require(dplyr)
-
 results %>%
   summary(redundant = TRUE) %>%
   plot()
-
-
 
 
 ```
@@ -501,14 +502,16 @@ rm(list=ls(pattern="treeX"))
 ```
 
 
-#2. Load final tree and clean data
+#2. Load final tree/data and clean data
 ```{r}
 require(phytools)
 require(mulTree)
-#tree <- read.tree("CompletePhyCarn.txt")
 tree <- read.nexus("CompletePhyCarn.nex")
+data_final <- read.delim("carn-ext.txt", header=T)
+rownames(data_final) <- data_final$species_name
 
-clean <- clean.data(speciesE, tree)
+
+clean <- clean.data(data_final, tree)
 tree <- clean$tree
 tree1 <- clean$tree[[2]]
 data <- clean$data
@@ -701,7 +704,7 @@ summary (fit_rstanarm)
 ```{r}
 
 #Load data for pc, exclude chars
-data.pc <- data[,3:15]
+data.pc <- data[,3:16]
 rownames(data.pc) <- data$species_name
 
 
@@ -727,8 +730,6 @@ data.pc$Extinct0 <- NULL
 #Impute data.pc
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
-
-imp <- mice(data.pc, 20, maxit = 5, method = c("norm", "norm", "norm", "norm", "norm", "", "norm", "polyreg", "norm", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","","","",""))
 
 imp <- mice(data.pc, 20, maxit = 10, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "polyreg", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
 
