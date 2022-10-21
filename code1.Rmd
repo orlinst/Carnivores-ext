@@ -386,7 +386,23 @@ data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors ba
 
 
 require(lattice)
+library(latticeExtra)
 dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
+
+
+p4 <- dotplot(factor(dataX1$extant) ~ (dataX1$litter))
+p3 <- dotplot(factor(dataX17$extant) ~ (dataX17$litter))
+p2 <- dotplot(factor(dataX11$extant) ~ (dataX11$litter))
+p1 <- dotplot(factor(dataX9$extant) ~ (dataX9$litter))
+p1 + as.layer(p2) + as.layer(p3) + as.layer(p4)
+
+
+
+
+
+
+
+
 ```
 
 
@@ -506,15 +522,33 @@ rm(list=ls(pattern="treeX"))
 ```{r}
 require(phytools)
 require(mulTree)
+
 tree <- read.nexus("CompletePhyCarn.nex")
 data_final <- read.delim("carn-ext.txt", header=T)
 rownames(data_final) <- data_final$species_name
+
+data_final$extant <- as.factor(data_final$extant)
+data_final$loctype <- as.factor(data_final$loctype)
+data_final$diet.cat <- as.factor(data_final$diet.cat)
+
+
 
 
 clean <- clean.data(data_final, tree)
 tree <- clean$tree
 tree1 <- clean$tree[[2]]
 data <- clean$data
+
+
+load("./imp20x100.Rdata")
+
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+
 
 ```
 
@@ -539,6 +573,7 @@ regress.multi.impute <- function (multree, sets, model, from=1, to=length(tree),
     #z <- data.frame(matrix(ncol = 10, nrow = 10))
 # gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
 # (see print.pval fun) and prints them - progress is displayed
+    
 for (i in from:to){
 for (imps in 1:sets){
     temptree <- multree[[i]]
@@ -580,22 +615,139 @@ for (imps in 1:sets){
 #pt(zvalues, species - degs of F)
 ```
 
-
-
-##USING MIRA OBJECT
+#Reg M Impute with Random
 ```{r}
-for (imps in 1:20){
-    temptree <- tree[[i]]
-    model1 <- with(imp, phylolm(extant ~ mass.g, get(paste0("dataX", imps)), temptree, method = c("logistic_MPLE")))}
 
-for (imps in 1:20){
-    temptree <- tree[[i]]
+regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
+  rand = sample.int(1000, num)
+  to = length(rand)
+  a = 0 #counter for sig models
+  b = 0
+  z = matrix(ncol = length(colnames(dataX1)), nrow =sets*to)
+  total = sets*to
+  pb <- txtProgressBar(min = 0,      # Minimum value of the progress bar
+                       max = total, # Maximum value of the progress bar
+                       style = 3,    # Progress bar style (also available style = 1 and style = 2)
+                       width = 50,   # Progress bar width. Defaults to getOption("width")
+                       char = "=")   # Character used to create the bar
+  #z <- NULL
+  #z <- data.frame(matrix(ncol = 10, nrow = 10))
+  # gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+  # (see print.pval fun) and prints them - progress is displayed
+  rand = sample.int(1000, num)
+  for (i in rand){
+    for (imps in 1:sets){
+      temptree <- multree[[i]]
+      s1 <- phyloglm(model, get(paste0("dataX", imps)), temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+      b = b + 1
+      k = summary(s1)$coefficients[,3]
+      #print(k)
+      #print(length(k))
+      z[b, 1 : length(k)] = k
+      s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
+      asd <- as.numeric(s2[[1]])
+      
+      for(bar in 1:b) {
+        setTxtProgressBar(pb, bar)}
+      
+      
+      if(any(asd[-1]<alpha)){
+        #print.pval(asd[-1]) 
+        a = a+1
+        cat("\n", "---------------", "\n", " N Sig models:", a, " out of", b, "", round((a/b)*100, 2), "% " ,"\n", "Models left:", (sets*to)-b, "\n") }
+      
+      #print(summary(s1)$coefficients[,4])
+      print (summary(s1))
+      #print(z)
+    }
+  }
+  close(pb)
+  cat(paste0("\n ==================== \n", " Total models: ", to, "x", sets, "=", to*sets, " (trees x imputed sets)",  "\n Significant: ", a, "\n ", "p<", alpha," in ", round((a/(to*sets))*100, 2), "% of the tested sets", "\n ==================== \n"))
+  zvalues <<- colMeans(abs(z), na.rm=T) # z or abs z?!
+  #convert z values to p
+  #out <- data.frame()
+  
+  #cat(paste0("\n P-values \n"))
+  vars <- row.names(s2)
+  pval <- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+  out <- data.frame(vars, pval)
+  print(out)
+}
+```
+regress.multi.impute1(tree, 5, extant ~ mass.g, 5)
 
-    as.mira(models) <- with(imp, phylolm(extant ~ mass.g, temptree, method = c("logistic_MPLE")))}
+regress.multi.impute1(tree, 5, extant ~ longevity + mass.g + litter, 20, alpha=0.001)
+
+
+
+
+
+
+
+
+
+
+
+USING MIRA OBJECT
+```{r}
+for (t in 1:1000) {
+    assign(paste0("model",t), with(imp, phyloglm(extant ~ mass.g, tree[[t]], method = c("logistic_MPLE"))))}
+
+for (i in 1:20){
+    temptree <- tree[[i]]
+    as.mira(models) <- with(imp, phyloglm(extant ~ mass.g, phy=temptree, method = c("logistic_MPLE")))}
+
+
+
+for (t in 1:3) {
+   paste0("model",t) <- with(imp, {phyloglm(extant ~ mass.g, phy=tree[[t]], method = c("logistic_MPLE"))})}
+
+})
+
+
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+
+
+for (t in 1:2) {
+for (imps in 1:20) {
+      model <- with(imp, phyloglm(extant ~ mass.g, data =get(paste0("dataX", imps)), phy=tree[[t]], method = c("logistic_MPLE")))}}
+
+
+
+
+
+
+
 
 
 
 pool(model1)
+
+
+fit <- with(implist, {
+    lmer(MathAchiev ~ 1 + Sex + I.SES + G.SES + (1|ID))
+})
+
+for (t in 1:1000){
+model[t] <- with(imp, {
+        phyloglm(extant ~ mass.g, phy=tree[[t]], method = c("logistic_MPLE"))
+  })
+}
+                    
+                    
+        
+x <- c(sample(1:1000, 1), sample(1:1000, 999, replace = T))
+length(unique(x))
+sample(x, 1000)
+x
+
+
+
 ```
 
 ##RUN
@@ -605,10 +757,13 @@ pool(model1)
 
 regress.multi.impute(tree, 5, extant ~ mass.g, 1, 4)
 
-
+regress.multi.impute(tree, 20, extant ~ mass.g + home.range + eq + pc + litter + simpson + shannon + abundance + longevity, 1, 3)
 #full model with simpason/shannon
 #regress.multi.impute(tree, 10, extant ~ mass.g + home.range + brain + pc + BMR + litter + simpson + abundance + loctype + diet.cat, 1, 9)
 #pc!
+
+#clear mass signal 
+#brain 0.06
 
 ```
 
@@ -704,8 +859,8 @@ summary (fit_rstanarm)
 ```{r}
 
 #Load data for pc, exclude chars
-data.pc <- data[,3:16]
-rownames(data.pc) <- data$species_name
+data.pc <- data_final[,3:17]
+rownames(data.pc) <- data_final$species_name
 
 
 #### Breaking down cat variables
@@ -731,11 +886,11 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data.pc, 20, maxit = 10, method = c("pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "polyreg", "norm", "norm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm","","","","","",""))
+imp <- mice(data.pc, 20, maxit = 100, method = c("pmm", "pmm", "logreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm"))
 
 
 save(imp, file = "imp20x100.RData")
-load("./imp20x10.Rdata")
+load("./imp20x100.Rdata")
 
 
 plot(imp)
@@ -1111,7 +1266,7 @@ require(lavaan)
 
 pathmodelLV <-'#path analysis
 #measurement model
-somatic=~ BMR + mass.g + brain
+somatic=~ BMR + mass.g + longevity
 locomotion=~ at + pc + home.range
 #regression model
 extant ~ locomotion + somatic
