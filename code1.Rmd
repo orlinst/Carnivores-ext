@@ -852,6 +852,17 @@ fit_rstanarm <- stan_glm(
 )
 
 summary (fit_rstanarm)
+
+
+
+
+require(sensiPhy)
+
+tree <- tree_phyglm(y ~ x, data = dat, phy = mphy, n.tree = 30)
+sensi_plot(asd)
+
+
+
 ```
 
 
