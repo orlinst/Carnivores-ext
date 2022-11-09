@@ -723,10 +723,10 @@ par(mfrow=c(1,2))
 
 h <- hist(pvals[,2], breaks=25, plot=FALSE)
 cuts <- cut(h$breaks, c(-Inf, 0.05,1))
-plot(h, col=c("firebrick", "white")[cuts], main=paste("Histogram of p-values \n N =", nrow(pvals),"\n " ,sum(pvals >= 0.05), "<=0.05", " \n mean =", signif(mean(pvals[,2]))), xlab="p-values", xaxt='n', cex.main=0.8)
+plot(h, col=c("firebrick", "white")[cuts], main=paste("Histogram of p-values \n N =", nrow(pvals),"\n ", sum(pvals[,2] <= 0.05), "<=0.05", " \n mean =", signif(mean(pvals[,2]))), xlab="p-values", xaxt='n', cex.main=0.8)
 text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
 axis(1, at = seq(0, 1, by = 0.01), las=2)
-abline(v=mean(pvals[,2]),col="blue",lwd=5)
+abline(v=mean(pvals[,2]),col="blue",lwd=3)
 arrows(x0 = 0.05,
        y0 = 0.001,
        x1 = 0.05,
