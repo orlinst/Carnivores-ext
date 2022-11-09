@@ -539,7 +539,7 @@ tree <- clean$tree
 tree1 <- clean$tree[[2]]
 data <- clean$data
 
-
+require(mice)
 load("./imp20x100.Rdata")
 
 
@@ -621,6 +621,8 @@ for (imps in 1:sets){
 regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
   rand = sample.int(1000, num)
   to = length(rand)
+  pvals = list()
+  estimates = list()
   a = 0 #counter for sig models
   b = 0
   z = matrix(ncol = length(colnames(dataX1)), nrow =sets*to)
@@ -644,8 +646,21 @@ regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v
       #print(k)
       #print(length(k))
       z[b, 1 : length(k)] = k
-      s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
-      asd <- as.numeric(s2[[1]])
+      
+      s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) #extract p value
+      asd <- as.numeric(s2[[1]]) #save it as numeric
+      
+      s21 <- as.data.frame(summary(s1)$coefficients[,"Estimate"]) #export estimate
+      asd1 <- as.numeric(s21[[1]])  #save as numeric
+    
+      pvals <- rbind(pvals, asd)
+      estimates <- rbind(estimates, asd1)
+      
+      
+     
+      
+    
+      
       
       for(bar in 1:b) {
         setTxtProgressBar(pb, bar)}
@@ -669,8 +684,17 @@ regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v
   
   #cat(paste0("\n P-values \n"))
   vars <- row.names(s2)
-  pval <- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+  pval <<- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
   out <- data.frame(vars, pval)
+  
+  pvals <<- pvals
+  colnames(pvals) <<- row.names(s2)
+  rownames(pvals) <<- 1:nrow(pvals)
+  
+  estimates <<- estimates
+  colnames(estimates) <<- row.names(s2)
+  rownames(estimates) <<- 1:nrow(estimates)
+  
   print(out)
 }
 ```
@@ -679,7 +703,46 @@ regress.multi.impute1(tree, 5, extant ~ mass.g, 5)
 regress.multi.impute1(tree, 5, extant ~ longevity + mass.g + litter, 20, alpha=0.001)
 
 
+###Plotting the regression
+```{r}
 
+pvals <- as.data.frame(pvals)
+estimates <- as.data.frame(estimates)
+
+pvals <- lapply(pvals, as.numeric)
+estimates <- lapply(estimates, as.numeric)
+
+pvals <- as.data.frame(pvals)
+estimates <- as.data.frame(estimates)
+
+par(mfrow=c(1,2))
+
+#breaks=nrow(pvals)
+#breaks=nrow(estimates)
+
+
+h <- hist(pvals[,2], breaks=25, plot=FALSE)
+cuts <- cut(h$breaks, c(-Inf, 0.05,1))
+plot(h, col=c("firebrick", "white")[cuts], main=paste("Histogram of p-values \n N =", nrow(pvals),"\n " ,sum(pvals >= 0.05), "<=0.05", " \n mean =", signif(mean(pvals[,2]))), xlab="p-values", xaxt='n', cex.main=0.8)
+text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
+axis(1, at = seq(0, 1, by = 0.01), las=2)
+abline(v=mean(pvals[,2]),col="blue",lwd=5)
+arrows(x0 = 0.05,
+       y0 = 0.001,
+       x1 = 0.05,
+       y1 = 100,
+       code =1,
+       length = 0.1,
+       lwd = 4,
+       col = "yellow")
+       
+
+h1 <- hist(estimates[,2], breaks = 25, main=paste("Histogram of estimates \n N=", nrow(estimates), "mean =", signif(mean(estimates[,2]))), xlab="Estimates", col="darkmagenta", cex.main=0.8)
+text(h1$mids,h1$counts,labels=h1$counts, adj=c(0.5, -0.5))
+
+
+```
+dev.off()
 
 
 
