@@ -1,0 +1,175 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Load up data/tree/imputations
+```{r}
+require(phytools)
+require(mulTree)
+
+tree <- read.nexus("CompletePhyCarn.nex")
+data_final <- read.delim("carn-ext.txt", header=T)
+rownames(data_final) <- data_final$species_name
+
+data_final$extant <- as.factor(data_final$extant)
+data_final$loctype <- as.factor(data_final$loctype)
+data_final$diet.cat <- as.factor(data_final$diet.cat)
+
+
+
+
+clean <- clean.data(data_final, tree)
+tree <- clean$tree
+tree1 <- clean$tree[[2]]
+data <- clean$data
+
+require(mice)
+load("./imp25x100.Rdata")
+
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+```
+
+
+#Function - mi.glm 
+```{r}
+
+mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
+  rand = sample.int(1000, num)
+  to = length(rand)
+  pvals = list()
+  estimates = list()
+  a = 0 #counter for sig models
+  b = 0
+  z = matrix(ncol = length(colnames(dataX1)), nrow =sets*to)
+  total = sets*to
+  pb <- txtProgressBar(min = 0,      # Minimum value of the progress bar
+                       max = total, # Maximum value of the progress bar
+                       style = 3,    # Progress bar style (also available style = 1 and style = 2)
+                       width = 50,   # Progress bar width. Defaults to getOption("width")
+                       char = "=")   # Character used to create the bar
+  #z <- NULL
+  #z <- data.frame(matrix(ncol = 10, nrow = 10))
+  # gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+  # (see print.pval fun) and prints them - progress is displayed
+  rand = sample.int(1000, num)
+  for (i in rand){
+    for (imps in 1:sets){
+      temptree <- multree[[i]]
+      s1 <- phyloglm(model, get(paste0("dataX", imps)), temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+      b = b + 1
+      k = summary(s1)$coefficients[,3]
+      #print(k)
+      #print(length(k))
+      z[b, 1 : length(k)] = k
+      
+      s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) #extract p value
+      asd <- as.numeric(s2[[1]]) #save it as numeric
+      
+      s21 <- as.data.frame(summary(s1)$coefficients[,"Estimate"]) #export estimate
+      asd1 <- as.numeric(s21[[1]])  #save as numeric
+    
+      pvals <- rbind(pvals, asd)
+      estimates <- rbind(estimates, asd1)
+      
+      
+     
+      
+    
+      
+      
+      for(bar in 1:b) {
+        setTxtProgressBar(pb, bar)}
+      
+      
+      if(any(asd[-1]<alpha)){
+        #print.pval(asd[-1]) 
+        a = a+1
+        cat("\n", "---------------", "\n", " N Sig models:", a, " out of", b, "", round((a/b)*100, 2), "% " ,"\n", "Models left:", (sets*to)-b, "\n") }
+      
+      #print(summary(s1)$coefficients[,4])
+      print (summary(s1))
+      #print(z)
+    }
+  }
+  close(pb)
+  cat(paste0("\n ==================== \n", " Total models: ", to, "x", sets, "=", to*sets, " (trees x imputed sets)",  "\n Significant: ", a, "\n ", "p<", alpha," in ", round((a/(to*sets))*100, 2), "% of the tested sets", "\n ==================== \n"))
+  zvalues <<- colMeans(abs(z), na.rm=T) # z or abs z?!
+  #convert z values to p
+  #out <- data.frame()
+  
+  #cat(paste0("\n P-values \n"))
+  vars <- row.names(s2)
+  pval <<- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+  out <- data.frame(vars, pval)
+  
+  pvals <<- pvals
+  colnames(pvals) <<- row.names(s2)
+  rownames(pvals) <<- 1:nrow(pvals)
+  
+  estimates <<- estimates
+  colnames(estimates) <<- row.names(s2)
+  rownames(estimates) <<- 1:nrow(estimates)
+  
+  print(out)
+}
+```
+
+
+#Function - plot.mi.glm
+```{r}
+plot.mi.glm <- function (pvals, estimates) {
+
+
+pvals <- as.data.frame(pvals)
+estimates <- as.data.frame(estimates)
+
+pvals <- lapply(pvals, as.numeric)
+estimates <- lapply(estimates, as.numeric)
+
+pvals <- as.data.frame(pvals)
+estimates <- as.data.frame(estimates)
+
+
+
+#PLOT LOOP
+
+par(mfrow=c(ncol(pvals),2))
+
+for (i in 2:ncol(pvals)) {
+
+  
+  #breaks=nrow(pvals)
+  #breaks=nrow(estimates)
+  
+  h <- hist(pvals[,i], breaks=50, plot=FALSE)
+  cuts <- cut(h$breaks, c(-Inf, 0.05,1))
+  plot(h, col=c("firebrick", "white")[cuts], main=paste(colnames(pvals)[i], ": Histogram of p-values \n N =", nrow(pvals), "Trees = ", nrow(pvals)/25, "\n ", sum(pvals[,i] <= 0.05), "<=0.05", " \n median =", signif(median(pvals[,2]))), xlab="p-values", xaxt='n', cex.main=0.8)
+  text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
+  axis(1, at = seq(0, 1, by = 0.01), las=2)
+  abline(v=median(pvals[,2]),col="blue",lwd=3)
+  arrows(x0 = 0.05,
+         y0 = 0.001,
+         x1 = 0.05,
+         y1 = 100,
+         code =1,
+         length = 0.1,
+         lwd = 4,
+         col = "yellow")
+  
+  
+  h1 <- hist(estimates[,i], breaks = 25, main=paste("Histogram of estimates \n N=", nrow(estimates), "median =", signif(median(estimates[,i]))), xlab="Estimates", col="darkmagenta", cex.main=0.8)
+  text(h1$mids,h1$counts,labels=h1$counts, adj=c(0.5, -0.5))
+  
+}
+}
+```
+
+mi.glm(tree, 25, extant ~ mass.g, 50)
+
+plot.mi.glm (pvals, estimates)

@@ -540,7 +540,7 @@ tree1 <- clean$tree[[2]]
 data <- clean$data
 
 require(mice)
-load("./imp20x100.Rdata")
+load("./imp25x100.Rdata")
 
 
 for(imputedsets in 1: length(imp$imp[[1]])) {
@@ -618,7 +618,7 @@ for (imps in 1:sets){
 #Reg M Impute with Random
 ```{r}
 
-regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
+mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
   rand = sample.int(1000, num)
   to = length(rand)
   pvals = list()
@@ -698,13 +698,15 @@ regress.multi.impute1 <- function (multree, sets, model, num, alpha=0.05, btol.v
   print(out)
 }
 ```
-regress.multi.impute1(tree, 25, extant ~ mass.g, 50)
+mi.glm(tree, 25, extant ~ mass.g, 50)
 
-regress.multi.impute1(tree, 5, extant ~ longevity + mass.g + litter, 20, alpha=0.001)
+mi.glm(tree, 5, extant ~ longevity + mass.g + litter, 20, alpha=0.001)
 
 
 ###Plotting the regression
 ```{r}
+plot.mi.glm <- function (pvals, estimates) {
+
 
 pvals <- as.data.frame(pvals)
 estimates <- as.data.frame(estimates)
@@ -714,6 +716,63 @@ estimates <- lapply(estimates, as.numeric)
 
 pvals <- as.data.frame(pvals)
 estimates <- as.data.frame(estimates)
+
+
+
+#PLOT LOOP
+
+par(mfrow=c(ncol(pvals),2))
+
+for (i in 2:ncol(pvals)) {
+
+  
+  #breaks=nrow(pvals)
+  #breaks=nrow(estimates)
+  
+  h <- hist(pvals[,i], breaks=50, plot=FALSE)
+  cuts <- cut(h$breaks, c(-Inf, 0.05,1))
+  plot(h, col=c("firebrick", "white")[cuts], main=paste(colnames(pvals)[i], ": Histogram of p-values \n N =", nrow(pvals), "Trees = ", nrow(pvals)/25, "\n ", sum(pvals[,i] <= 0.05), "<=0.05", " \n median =", signif(median(pvals[,2]))), xlab="p-values", xaxt='n', cex.main=0.8)
+  text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
+  axis(1, at = seq(0, 1, by = 0.01), las=2)
+  abline(v=median(pvals[,2]),col="blue",lwd=3)
+  arrows(x0 = 0.05,
+         y0 = 0.001,
+         x1 = 0.05,
+         y1 = 100,
+         code =1,
+         length = 0.1,
+         lwd = 4,
+         col = "yellow")
+  
+  
+  h1 <- hist(estimates[,i], breaks = 25, main=paste("Histogram of estimates \n N=", nrow(estimates), "median =", signif(median(estimates[,i]))), xlab="Estimates", col="darkmagenta", cex.main=0.8)
+  text(h1$mids,h1$counts,labels=h1$counts, adj=c(0.5, -0.5))
+  
+}
+}
+#plot loop
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 par(mfrow=c(2,2))
 
