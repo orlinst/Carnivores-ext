@@ -38,8 +38,11 @@ for(imputedsets in 1: length(imp$imp[[1]])) {
 
 #Function - mi.glm 
 ```{r}
+require(tictoc)
+require(phylolm)
 
 mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) {
+  tic("Total time")
   rand = sample.int(1000, num)
   to = length(rand)
   summaries = list()
@@ -47,7 +50,7 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
   estimates = list()
   a = 0 #counter for sig models
   b = 0
-  z = matrix(ncol = length(colnames(dataX1)), nrow =sets*to)
+  z = matrix(ncol = (length(colnames(dataX1))*2), nrow =sets*to)
   total = sets*to
   pb <- txtProgressBar(min = 0,      # Minimum value of the progress bar
                        max = total, # Maximum value of the progress bar
@@ -81,7 +84,7 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
       #s22 <- as.data.frame(summary(s1)$coefficients)
       summaries[[b]] <- s1
 
-      
+#      
       for(bar in 1:b) {
         setTxtProgressBar(pb, bar)}
       
@@ -118,6 +121,7 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
   summaries <<- summaries
   
   print(out)
+  toc()
 }
 ```
 
@@ -140,11 +144,11 @@ estimates <- as.data.frame(estimates)
 
 #PLOT LOOP
 
-par(mfrow=c(ncol(pvals),2))
+
 
 for (i in 2:ncol(pvals)) {
-
-  
+  dev.next()
+  par(mfrow=c(1,2))
   #breaks=nrow(pvals)
   #breaks=nrow(estimates)
   
@@ -153,7 +157,7 @@ for (i in 2:ncol(pvals)) {
   plot(h, col=c("firebrick", "white")[cuts], main=paste(colnames(pvals)[i], ": Histogram of p-values \n N =", nrow(pvals), "Trees = ", nrow(pvals)/25, "\n ", sum(pvals[,i] <= 0.05), "<=0.05", " \n median =", signif(median(pvals[,i]))), xlab="p-values", xaxt='n', cex.main=0.8)
   text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
   axis(1, at = seq(0, 1, by = 0.01), las=2)
-  abline(v=median(pvals[,2]),col="blue",lwd=3)
+  abline(v=median(pvals[,i]),col="blue",lwd=3)
   arrows(x0 = 0.05,
          y0 = 0.001,
          x1 = 0.05,
@@ -172,11 +176,16 @@ for (i in 2:ncol(pvals)) {
 ```
 
 
-
-
+#Calls
 ```{r}
 
 mi.glm(tree, 25, extant ~ mass.g, 50)
+
+#OR
+tic("Time")
+invisible(capture.output(mi.glm(tree, 25, extant ~ mass.g, 2)))
+toc()
+######
 
 plot.mi.glm (pvals, estimates)
 
