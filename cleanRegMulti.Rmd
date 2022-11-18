@@ -48,6 +48,7 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
   summaries = list()
   pvals = list()
   estimates = list()
+  aic = list()
   a = 0 #counter for sig models
   b = 0
   z = matrix(ncol = (length(colnames(dataX1))*2), nrow =sets*to)
@@ -77,9 +78,13 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
       
       s21 <- as.data.frame(summary(s1)$coefficients[,"Estimate"]) #export estimate
       asd1 <- as.numeric(s21[[1]])  #save as numeric
+      
+      s22 <- as.data.frame(summary(s1)$aic) #export aic
+      asd2 <- as.numeric(s22[[1]])
     
       pvals <- rbind(pvals, asd)
       estimates <- rbind(estimates, asd1)
+      aic <- rbind(aic, asd2)
       
       #s22 <- as.data.frame(summary(s1)$coefficients)
       summaries[[b]] <- s1
@@ -101,14 +106,16 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
   }
   close(pb)
   cat(paste0("\n ==================== \n", " Total models: ", to, "x", sets, "=", to*sets, " (trees x imputed sets)",  "\n Significant: ", a, "\n ", "p<", alpha," in ", round((a/(to*sets))*100, 2), "% of the tested sets", "\n ==================== \n"))
-  zvalues <<- colMeans(abs(z), na.rm=T) # z or abs z?!
+  zvalues <<- colMeans((z), na.rm=T) # z or abs z?!
   #convert z values to p
   #out <- data.frame()
   
   #cat(paste0("\n P-values \n"))
   vars <- row.names(s2)
-  pval <<- pt(zvalues[1:length(row.names(s2))], ((length(row.names(dataX1)) - (length(row.names(s2))))), lower.tail = FALSE)
+  pval <<- 2*pnorm(abs(zvalues[1:length(row.names(s2))]), lower.tail=F)
   out <- data.frame(vars, pval)
+  
+  #((length(row.names(dataX1)) - (length(row.names(s2)))))
   
   pvals <<- pvals
   colnames(pvals) <<- row.names(s2)
@@ -118,10 +125,15 @@ mi.glm <- function (multree, sets, model, num, alpha=0.05, btol.v=10, boot.v=0) 
   colnames(estimates) <<- row.names(s2)
   rownames(estimates) <<- 1:nrow(estimates)
   
+  aic <- unlist(aic)
+  maic <<- mean(aic)
+ 
   summaries <<- summaries
   
   print(out)
+  print(maic)
   toc()
+  out <<- out
 }
 ```
 
@@ -178,6 +190,16 @@ for (i in 2:ncol(pvals)) {
 
 #Calls
 ```{r}
+#run in loop
+
+var = var123
+for (i in var) { model = paste0("extant ~ ", i)
+                tic("Time")
+                invisible(capture.output(mi.glm(tree, 2, model, 1)))
+                toc()
+                print(out)
+                print(maic)}
+
 
 mi.glm(tree, 25, extant ~ mass.g, 50)
 
@@ -185,6 +207,7 @@ mi.glm(tree, 25, extant ~ mass.g, 50)
 tic("Time")
 invisible(capture.output(mi.glm(tree, 25, extant ~ mass.g, 2)))
 toc()
+out
 ######
 
 plot.mi.glm (pvals, estimates)
@@ -196,6 +219,7 @@ summary(MIcombine(summaries))
 
 
 betas <- MIextract(summaries,fun=coef)
+betas1 <- do.call(rbind, betas)
 vars <- MIextract(summaries, fun=vcov)
 summary(MIcombine(betas,vars))
 

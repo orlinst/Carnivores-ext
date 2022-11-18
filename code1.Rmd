@@ -59,11 +59,35 @@ for (i in 1:length(colnames(speciesE))){
     if (class(speciesE[[i]]) == "numeric") 
         speciesE[[i]] <- normalize(speciesE[[i]], na.rm = TRUE)}
 
+
+data_final$activity <- michaud_additional$Activity.pattern[w]
+data_final$soc.complexity <- michaud_additional$Social.complexity[w]
+data_final$gr.size <- michaud_additional$Group.size[w]
+data_final$ges.days <- michaud_additional$Gestation.days[w]
+data_final$interbirth.days <- michaud_additional$Interbirth.days[w]
+data_final$weaning.days <- michaud_additional$Weaning.days[w]
+
+
+data_final$activity <- as.factor(data_final$activity)
+data_final$soc.complexity <- as.factor(data_final$soc.complexity)
+
+data_final$ges.days <- log(data_final$ges.days)
+data_final$interbirth.days <- log(data_final$interbirth.days)
+data_final$weaning.days <- log(data_final$weaning.days)
+data_final$gr.size <- log(data_final$gr.size)
+
+data_final$ges.days <- normalize(data_final$ges.days, na.rm = TRUE)
+data_final$interbirth.days <- normalize(data_final$interbirth.days, na.rm = TRUE)
+data_final$weaning.days <- normalize(data_final$weaning.days, na.rm = TRUE)
+data_final$gr.size <- normalize(data_final$gr.size, na.rm = TRUE)
+
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F)
 
-write.table(speciesE, "carn-ext.txt", sep = "\t", row.names = FALSE)
+write.table(data_final, "carn-ext.txt", sep = "\t", row.names = FALSE)
 
 ```
+
+
 
 ##Marking extinct vs extant
 ```{r}
@@ -71,8 +95,8 @@ extinct_large_mammals <- read.delim("extinct_large_mammals.txt", header=F)
 extant_large_mammals <- read.delim("extant_large_mammals.txt", header=F)
 
 #check for missing species
-extant <- match(speciesE$species, extant_large_mammals$V1)
-extinct <- match(speciesE$species, extinct_large_mammals$V1)
+extant <- match(data_final$species, extant_large_mammals$V1)
+extinct <- match(data_final$species, extinct_large_mammals$V1)
 
 sum(names(table(speciesE$species)) %in% names(table(extinct_large_mammals)))  #count common species between ecoreg and Extinct list = 19
 sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #count common species between ecoreg and Extant list = 95
@@ -80,12 +104,19 @@ sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #c
 which(is.na(extant)&(is.na(extinct))) #check for double NAs
 check <- cbind (extant, extinct) #check for double NAs
 
+
+extinct123 <- which(!is.na(check[,2]))
+data_final$species[extinct123]
+data_final$extant <- 1
+data_final$extant[extinct123] = 0
+data_final[,c("extant", "species")]
+data_final = data_final[,c(1:3, 21, 4:20)]
 #match extant species in the dataset and mark them with 0 = extinct and 1 = extant
 
-m <- match(speciesE$species, extant_large_mammals$V1)
-speciesE$extant <- m
-speciesE$extant[!is.na(speciesE$extant)] <- 1
-speciesE$extant[is.na(speciesE$extant)] <- 0
+#m <- match(speciesE$species, extant_large_mammals$V1)
+#speciesE$extant <- m
+#speciesE$extant[!is.na(speciesE$extant)] <- 1
+#speciesE$extant[is.na(speciesE$extant)] <- 0
 ```
 
 
@@ -530,7 +561,8 @@ rownames(data_final) <- data_final$species_name
 data_final$extant <- as.factor(data_final$extant)
 data_final$loctype <- as.factor(data_final$loctype)
 data_final$diet.cat <- as.factor(data_final$diet.cat)
-
+data_final$activity <- as.factor(data_final$activity)
+data_final$soc.complexity <- as.factor(data_final$soc.complexity)
 
 
 
@@ -1043,7 +1075,7 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data.pc, 25, maxit = 100, method = c("pmm", "pmm", "logreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm"))
+imp <- mice(data_final, 25, maxit = 100, method = c("", "", "pmm", "pmm", "logreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "polyreg", "polyreg", "pmm", "pmm", "pmm", "pmm"))
 
 
 save(imp, file = "imp25x100.RData")
@@ -1376,7 +1408,7 @@ for (i in nos){
 Nowhere to run nowhere to hide! :D
 
 
-#Misingness (and imputation)
+#Missingness (and imputation)
 ```{r}
 require(naniar)
 require(mice)
