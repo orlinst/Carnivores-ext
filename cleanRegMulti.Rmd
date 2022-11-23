@@ -15,8 +15,16 @@ rownames(data_final) <- data_final$species_name
 data_final$extant <- as.factor(data_final$extant)
 data_final$loctype <- as.factor(data_final$loctype)
 data_final$diet.cat <- as.factor(data_final$diet.cat)
+data_final$activity <- as.factor(data_final$activity)
+#data_final$soc.complexity <- as.factor(data_final$soc.complexity)
 
 
+data_final$afrotropic <- as.factor(data_final$afrotropic)
+data_final$australasia <- as.factor(data_final$australasia)
+data_final$indomalaya <- as.factor(data_final$indomalaya)
+data_final$neotropic <- as.factor(data_final$neotropic)
+data_final$nearctic <- as.factor(data_final$nearctic)
+data_final$palearctic <- as.factor(data_final$palearctic)
 
 
 clean <- clean.data(data_final, tree)
@@ -31,6 +39,13 @@ load("./imp25x100.Rdata")
 for(imputedsets in 1: length(imp$imp[[1]])) {
   #extract imputed sets in separate dfs
   assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+#adding ecozones - check cols
+
+for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
+    
+    assign(i, cbind(get(i), data_final[,c(22:27)])) 
 }
 
 ```
@@ -192,13 +207,16 @@ for (i in 2:ncol(pvals)) {
 ```{r}
 #run in loop
 
-var = var123
+var = as.data.frame(colnames(data_final))
+var = var[-c(1,2, 5),1] #remove chars and extant
+
 for (i in var) { model = paste0("extant ~ ", i)
                 tic("Time")
-                invisible(capture.output(mi.glm(tree, 2, model, 1)))
+                invisible(capture.output(mi.glm(tree, 25, model, 50)))
                 toc()
                 print(out)
-                print(maic)}
+                print(maic)
+                plot.mi.glm (pvals, estimates)}
 
 
 mi.glm(tree, 25, extant ~ mass.g, 50)
@@ -208,7 +226,7 @@ tic("Time")
 invisible(capture.output(mi.glm(tree, 25, extant ~ mass.g, 2)))
 toc()
 out
-######
+###### mi.glm(tree, 25, extant ~ afrotropic + australasia+indomalaya+nearctic+neotropic+palearctic, 50)
 
 plot.mi.glm (pvals, estimates)
 
@@ -234,3 +252,50 @@ MIcombineP(MIcombine(summaries))
 
 for (i in 1:25) {colnames(summaries[[i]])[colnames(summaries[[i]]) == 'Estimate'] <- 'estimate'}
 sum1 <- as.mira(summaries)
+
+
+
+
+
+tic()
+p = array(dim=32,data=0)
+for (i in 1:1000)   {
+b = sample(1:length(extant),ceiling(length(extant) / 2))
+w = nnet(extant[b] ~ .,data=dataX1[b,c(3, 4, 6:27)], size = 1)$wts[2:33]
+p[w < 0] = p [w < 0] + 1
+}
+p / 1000
+toc()
+
+asd <- nnet(dataX12$extant ~ .,data=dataX12[,c(3,4,6:27)], size = 1) #exclude the extant col
+
+
+
+tic()
+p = array(dim=114,data=0, dimnames=list(dataX12$species_name))
+for (i in 1:1000)   {
+b = sample(1:length(extant),ceiling(length(extant) / 2))
+w = nnet(dataX12$extant[b] ~ .,data=dataX12[b,c(3, 4, 6:27)], size = 1)$residuals[,1]
+p[names(w)] = p[names(w)]  + w
+}
+a <- p / 1000
+toc()
+
+
+tic()
+p = array(dim=114,data=0, dimnames=list(dataX12$species_name))
+for (i in 1:1000)   {
+b = sample(1:length(extant),ceiling(length(extant) / 2))
+w = nnet(dataX12$extant[b] ~ .,data=dataX12[b,c(3, 4, 6:27)], size = 1)
+w2 = predict(w,dataX12[!1:114 %in% b, c(3, 4, 6:27)] )
+p[rownames(w2)] = p[rownames(w2)]  + w2[,1]
+}
+a <- p / 1000
+toc()
+
+sort(a)
+
+
+aa <- phyloglm(dataX12$extant ~ .,data=dataX12[,c(3,4,6:27)], tree[[12]])
+
+phyloglm(extant ~ .,data=dataX1[, c(3, 4, 6:27)]

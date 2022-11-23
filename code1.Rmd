@@ -110,7 +110,7 @@ data_final$species[extinct123]
 data_final$extant <- 1
 data_final$extant[extinct123] = 0
 data_final[,c("extant", "species")]
-data_final = data_final[,c(1:3, 21, 4:20)]
+data_final = data_final[,c(1:4, 21, 5:20)]
 #match extant species in the dataset and mark them with 0 = extinct and 1 = extant
 
 #m <- match(speciesE$species, extant_large_mammals$V1)
@@ -562,8 +562,15 @@ data_final$extant <- as.factor(data_final$extant)
 data_final$loctype <- as.factor(data_final$loctype)
 data_final$diet.cat <- as.factor(data_final$diet.cat)
 data_final$activity <- as.factor(data_final$activity)
-data_final$soc.complexity <- as.factor(data_final$soc.complexity)
+#data_final$soc.complexity <- as.factor(data_final$soc.complexity)
 
+
+data_final$afrotropic <- as.factor(data_final$afrotropic)
+data_final$australasia <- as.factor(data_final$australasia)
+data_final$indomalaya <- as.factor(data_final$indomalaya)
+data_final$neotropic <- as.factor(data_final$neotropic)
+data_final$nearctic <- as.factor(data_final$nearctic)
+data_final$palearctic <- as.factor(data_final$palearctic)
 
 
 clean <- clean.data(data_final, tree)
@@ -580,7 +587,12 @@ for(imputedsets in 1: length(imp$imp[[1]])) {
   assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
 }
 
+#adding ecozones - check cols
 
+for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
+    
+    assign(i, cbind(get(i), data_final[,c(22:27)])) 
+}
 
 ```
 
@@ -1075,7 +1087,7 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data_final, 25, maxit = 100, method = c("", "", "pmm", "pmm", "logreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "polyreg", "polyreg", "pmm", "pmm", "pmm", "pmm"))
+imp <- mice(data_final, 25, maxit = 50, method = c("", "", "pmm", "pmm", "logreg", "polyreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "logreg", "logreg","logreg","logreg","logreg","logreg"))
 
 
 save(imp, file = "imp25x100.RData")
