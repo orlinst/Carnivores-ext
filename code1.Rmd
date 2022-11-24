@@ -579,7 +579,7 @@ tree1 <- clean$tree[[2]]
 data <- clean$data
 
 require(mice)
-load("./imp25x100.Rdata")
+load("./imp20x100.Rdata")
 
 
 for(imputedsets in 1: length(imp$imp[[1]])) {
@@ -1087,11 +1087,11 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data_final, 25, maxit = 50, method = c("", "", "pmm", "pmm", "logreg", "polyreg", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "logreg", "logreg","logreg","logreg","logreg","logreg"))
+imp <- mice(data_final, 20, maxit = 100, method = c("", "", "norm", "norm", "logreg", "polyreg", "norm", "pmm", "polyreg", "pmm", "pmm", "pmm", "norm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "logreg", "logreg","logreg","logreg","logreg","logreg"))
 
 
-save(imp, file = "imp25x100.RData")
-load("./imp25x100.Rdata")
+save(imp, file = "imp20x100.RData")
+load("./imp20x100.Rdata")
 
 
 plot(imp)

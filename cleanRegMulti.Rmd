@@ -33,19 +33,12 @@ tree1 <- clean$tree[[2]]
 data <- clean$data
 
 require(mice)
-load("./imp25x100.Rdata")
+load("./imp20x100.Rdata")
 
 
 for(imputedsets in 1: length(imp$imp[[1]])) {
   #extract imputed sets in separate dfs
   assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
-}
-
-#adding ecozones - check cols
-
-for (i in paste0("dataX", 1:length(imp$imp[[1]]))) {
-    
-    assign(i, cbind(get(i), data_final[,c(22:27)])) 
 }
 
 ```
@@ -208,22 +201,22 @@ for (i in 2:ncol(pvals)) {
 #run in loop
 
 var = as.data.frame(colnames(data_final))
-var = var[-c(1,2, 5),1] #remove chars and extant
+var = var[-c(1,2,3, 5),1] #remove chars and extant
 
-for (i in var) { model = paste0("extant ~ ", i)
+for (i in var) { model = paste0("extant ~ mass.g +", i)
                 tic("Time")
-                invisible(capture.output(mi.glm(tree, 25, model, 50)))
+                invisible(capture.output(mi.glm(tree, 20, model, 20)))
                 toc()
                 print(out)
                 print(maic)
                 plot.mi.glm (pvals, estimates)}
 
 
-mi.glm(tree, 25, extant ~ mass.g, 50)
+mi.glm(tree, 20, extant ~ mass.g, 50)
 
 #OR
 tic("Time")
-invisible(capture.output(mi.glm(tree, 25, extant ~ mass.g, 2)))
+invisible(capture.output(mi.glm(tree, 20, extant ~ mass.g, 2)))
 toc()
 out
 ###### mi.glm(tree, 25, extant ~ afrotropic + australasia+indomalaya+nearctic+neotropic+palearctic, 50)
