@@ -200,10 +200,10 @@ for (i in 2:ncol(pvals)) {
 ```{r}
 #run in loop
 
-var = as.data.frame(colnames(data_final))
-var = var[-c(1,2,3, 5),1] #remove chars and extant
+var = as.data.frame(colnames(data_final)) #check variable names
+var = var[-c(1,2, 5),1] #remove chars and extant
 
-for (i in var) { model = paste0("extant ~ mass.g +", i)
+for (i in var) { model = paste0("extant ~", i) #add var +
                 tic("Time")
                 invisible(capture.output(mi.glm(tree, 20, model, 20)))
                 toc()
@@ -372,6 +372,8 @@ for(imputedsets in 1: length(imp$imp[[1]])) {assign(paste0("dataX",imputedsets),
 
 #Using caret and varimp
 ```{r}
+require(caret)
+
 pred.coefs <- list()
 output <- data.frame()
 #for (i in 1:10) {
@@ -380,7 +382,7 @@ for (imps in 1:length(imp$imp[[1]])) {
     random_sample <- createDataPartition(temp.matrix$extant, p = 0.8, list = FALSE)
     training_dataset  <- temp.matrix[random_sample, ]
     testing_dataset <- temp.matrix[-random_sample, ]
-    model <- glm(pnorm(scale(as.numeric(extant))) ~., data = training_dataset, family="quasibinomial")
+    model <- glm(pnorm(scale(as.numeric(extant))) ~. , data = training_dataset, family="quasibinomial")
     predictions <- predict(model, testing_dataset)
     pred.coefs[[imps]] = summary(model)$coefficients
 }
@@ -410,7 +412,7 @@ data.frame( R2 = R2(predictions, as.numeric(testing_dataset$extant)),
             MAE = MAE(predictions, as.numeric(testing_dataset$extant)))
 
 weights123 <-  as.data.frame(model$weights)
-plot(weights123$`model$weights`[weights123$`model$weights` < 0.16])
-text(weights123$`model$weights`[weights123$`model$weights` < 0.16], labels = rownames(weights123)[weights123$`model$weights` < 0.16], cex = 0.7)
+plot(weights123$`model$weights`[weights123$`model$weights` < 0.15])
+text(weights123$`model$weights`[weights123$`model$weights` < 0.15], labels = rownames(weights123)[weights123$`model$weights` < 0.15], cex = 0.7)
 
 ```

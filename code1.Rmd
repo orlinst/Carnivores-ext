@@ -1087,7 +1087,7 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data_final, 20, maxit = 100, method = c("", "", "norm", "norm", "logreg", "polyreg", "norm", "pmm", "polyreg", "pmm", "pmm", "pmm", "norm", "polyreg", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "pmm", "logreg", "logreg","logreg","logreg","logreg","logreg"))
+imp <- mice(data_final, 20, maxit = 100, method = c("", "", "midastouch", "midastouch", "logreg", "polyreg", "midastouch", "midastouch", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "logreg", "logreg","logreg","logreg","logreg","logreg"))
 
 
 save(imp, file = "imp20x100.RData")
