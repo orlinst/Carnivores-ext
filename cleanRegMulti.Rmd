@@ -292,3 +292,125 @@ sort(a)
 aa <- phyloglm(dataX12$extant ~ .,data=dataX12[,c(3,4,6:27)], tree[[12]])
 
 phyloglm(extant ~ .,data=dataX1[, c(3, 4, 6:27)]
+
+
+
+
+
+
+
+#Cross validation - 1
+```{r}
+
+var = as.data.frame(colnames(data_final))
+var = var[-c(1,2, 5),1]
+varX <- paste(var, collapse = "+") #full model
+
+
+pred.extant <- array(dim = 114, dimnames=list(dataX12$species_name), data = 0)
+pred.t <- array(dim= 33, data = 0) #dim is nr of vars
+for (i in 1:10) {
+  for (imps in 1:length(imp$imp[[1]])) {
+  temp.matrix <- complete(imp, imps)
+b = sample(1:length(temp.matrix$extant),ceiling(length(temp.matrix$extant) / 2))
+#aa1 <- glm(extant ~ home.range + interbirth.days + soc.complexity, temp.matrix[b,], family="binomial")
+aa1 <- glm(pnorm(scale(as.numeric(extant))) ~ varX, temp.matrix[b,], family="quasibinomial")
+asd <- predict(aa1, newdata=temp.matrix[!1:nrow(data_final) %in% b,])
+  if(length(asd) == 0 | is.na(sum(aa1$coefficients)))
+  next
+  asd = asd[!is.na(asd) & !is.infinite(asd) & !is.nan(asd)]
+#exp(asd)/(exp(asd)+1)
+pred.extant[names(asd)] = pred.extant[names(asd)] + exp(asd)/(exp(asd)+1)
+pred.t = pred.t + summary(aa1)$coefficients[,3]
+names(pred.t) = rownames(summary(aa1)$coefficients)
+if(is.nan(sum(pred.extant)))
+break
+  }
+}
+
+pred.extant/500 #imps + iters
+pred.t/200
+names(pred.t) = var
+
+
+cor.test(pred.extant/200, as.numeric(dataX12$extant), method = "s")
+
+
+mass.g+home.range+loctype+pc+litter+diet.cat+shannon+simpson+abundance+longevity+activity+soc.complexity+gr.size+ges.days+interbirth.days+weaning.days+eqm+BMRres+afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic
+
+FULL MODEL
+
+pred.extant <- array(dim = 114, dimnames=list(dataX12$species_name), data = 0)
+pred.t <- array(dim= 33, data = 0) #dim is nr of vars
+for (i in 1:10) {
+    for (imps in 1:length(imp$imp[[1]])) {
+        temp.matrix <- complete(imp, imps)
+        b = sample(1:length(temp.matrix$extant),ceiling(length(temp.matrix$extant) / 2))
+        #aa1 <- glm(extant ~ home.range + interbirth.days + soc.complexity, temp.matrix[b,], family="binomial")
+        aa1 <- glm(pnorm(scale(as.numeric(extant))) ~ mass.g+home.range+loctype+pc+litter+diet.cat+shannon+simpson+abundance+longevity+activity+soc.complexity+gr.size+ges.days+interbirth.days+weaning.days+eqm+BMRres+afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic, temp.matrix[b,], family="quasibinomial")
+        asd <- predict(aa1, newdata=temp.matrix[!1:nrow(data_final) %in% b,])
+        if(length(asd) == 0 | is.na(sum(aa1$coefficients)) | length(lapply(temp.matrix[c('diet.cat')], unique)[[1]]) == 1)
+            next
+        asd = asd[!is.na(asd) & !is.infinite(asd) & !is.nan(asd)]
+        #exp(asd)/(exp(asd)+1)
+        pred.extant[names(asd)] = pred.extant[names(asd)] + exp(asd)/(exp(asd)+1)
+        pred.t = pred.t + summary(aa1)$coefficients[,3]
+        names(pred.t) = rownames(summary(aa1)$coefficients)
+        if(is.nan(sum(pred.extant)))
+            break
+    }
+}
+
+```
+
+
+random_sample <- createDataPartition(dataX12$extant, p = 0.8, list = FALSE)
+training_dataset  <- dataX12[random_sample, ]
+testing_dataset <- dataX12[-random_sample, ]
+
+for(imputedsets in 1: length(imp$imp[[1]])) {assign(paste0("dataX",imputedsets), get(paste0("dataX",imputedsets))[-1])}
+
+#Using caret and varimp
+```{r}
+pred.coefs <- list()
+output <- data.frame()
+#for (i in 1:10) {
+for (imps in 1:length(imp$imp[[1]])) {
+    temp.matrix <- complete(imp, imps) [3:27]
+    random_sample <- createDataPartition(temp.matrix$extant, p = 0.8, list = FALSE)
+    training_dataset  <- temp.matrix[random_sample, ]
+    testing_dataset <- temp.matrix[-random_sample, ]
+    model <- glm(pnorm(scale(as.numeric(extant))) ~., data = training_dataset, family="quasibinomial")
+    predictions <- predict(model, testing_dataset)
+    pred.coefs[[imps]] = summary(model)$coefficients
+}
+#}
+
+
+require(plyr)
+asd <- lapply(pred.coefs, as.data.frame)
+ans1 = aaply(laply(asd, as.matrix), c(2, 3), mean)
+ans1
+
+sort(model$weights)
+
+V = caret::varImp(model)
+
+ggplot2::ggplot(V, aes(x=reorder(rownames(V),Overall), y=Overall)) +
+geom_point( color="blue", size=4, alpha=0.6)+
+geom_segment( aes(x=rownames(V), xend=rownames(V), y=0, yend=Overall), 
+color='skyblue') +
+xlab('Variable')+
+ylab('Overall Importance')+
+theme_light() +
+coord_flip() 
+
+data.frame( R2 = R2(predictions, as.numeric(testing_dataset$extant)),
+            RMSE = RMSE(predictions, as.numeric(testing_dataset$extant)),
+            MAE = MAE(predictions, as.numeric(testing_dataset$extant)))
+
+weights123 <-  as.data.frame(model$weights)
+plot(weights123$`model$weights`[weights123$`model$weights` < 0.16])
+text(weights123$`model$weights`[weights123$`model$weights` < 0.16], labels = rownames(weights123)[weights123$`model$weights` < 0.16], cex = 0.7)
+
+```
