@@ -171,12 +171,17 @@ speciesE$pc <- pc_noonan[w]
 
 #Adding BMR (from two diff columns same df)
 
-w <- match(speciesE$species, All_Carnivore_Species_BMRs$species_name) #match names
-w1 <- match(speciesE$species, All_Carnivore_Species_BMRs$synonym) #match synonyms
-speciesE$BMR <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w]
-speciesE$BMR1 <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w1]
-speciesE$BMR[is.na(speciesE$BMR)] = data$BMR1[!is.na(speciesE$BMR1)]
+w <- match(data_final$species, All.Carnivore.BMR.Final$species_name) #match names
+w1 <- match(data_final$species, All.Carnivore.BMR.Final$synonym) #match synonyms
+data_final$BMR <- All.Carnivore.BMR.Final$BMR_mlO2.h[w]
+data_final$BMR1 <- All.Carnivore.BMR.Final$BMR_mlO2.h[w1]
+data_final$BMR[is.na(data_final$BMR)] = data_final$BMR1[!is.na(data_final$BMR1)]
 
+
+
+data_final$mass <- All.Carnivore.BMR.Final.mass$mass_g[w]
+data_final$mass1 <- All.Carnivore.BMR.Final.mass$mass_g[w1]
+data_final$mass[is.na(data_final$mass)] = data_final$mass1[!is.na(data_final$mass1)]
 ```
 
 ##Diet re-cat
