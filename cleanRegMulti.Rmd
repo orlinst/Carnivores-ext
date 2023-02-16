@@ -174,7 +174,7 @@ for (i in 2:ncol(pvals)) {
   
   h <- hist(pvals[,i], breaks=50, plot=FALSE)
   cuts <- cut(h$breaks, c(-Inf, 0.05,1))
-  plot(h, col=c("firebrick", "white")[cuts], main=paste(colnames(pvals)[i], ": Histogram of p-values \n N =", nrow(pvals), "Trees = ", nrow(pvals)/25, "\n ", sum(pvals[,i] <= 0.05), "<=0.05", " \n median =", signif(median(pvals[,i]))), xlab="p-values", xaxt='n', cex.main=0.8)
+  plot(h, col=c("firebrick", "white")[cuts], main=paste(colnames(pvals)[i], ": Histogram of p-values \n N =", nrow(pvals), "Trees = ", nrow(pvals)/length(imp$imp[[1]]), "\n ", sum(pvals[,i] <= 0.05), "<=0.05", " \n median =", signif(median(pvals[,i]))), xlab="p-values", xaxt='n', cex.main=0.8)
   text(h$mids,h$counts,labels=h$counts, adj=c(0.5, -0.5),)
   axis(1, at = seq(0, 1, by = 0.01), las=2)
   abline(v=median(pvals[,i]),col="blue",lwd=3)
