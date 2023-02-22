@@ -448,7 +448,7 @@ require(see)
 require(dplyr)
 require(easystats)
 
-results <- correlation(speciesE)
+results <- correlation(data_final)
 summary(results)
 summary(results, redundant = TRUE)
 
@@ -1235,6 +1235,12 @@ rm(list=ls(patter= "tempscores"))
 rm(list=ls(patter= "Score"))
 
 
+#Phylosig
+require(sensiPhy)
+asdasd <- miss.phylo.d(data_final, tree[[3]], binvar= home.range)
+print(asdasd)
+plot(asdasd)
+#https://wiki.duke.edu/display/AnthroTree/5.5.1+Fritz+and+Purvis%27+D+in+R
 ```
 
 #~Plots

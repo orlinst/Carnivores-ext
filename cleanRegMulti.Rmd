@@ -338,7 +338,7 @@ cor.test(pred.extant/200, as.numeric(dataX12$extant), method = "s")
 
 mass.g+home.range+loctype+pc+litter+diet.cat+shannon+simpson+abundance+longevity+activity+soc.complexity+gr.size+ges.days+interbirth.days+weaning.days+eqm+BMRres+afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic
 
-FULL MODEL
+#FULL MODEL
 
 pred.extant <- array(dim = 114, dimnames=list(dataX12$species_name), data = 0)
 pred.t <- array(dim= 33, data = 0) #dim is nr of vars
@@ -370,18 +370,22 @@ testing_dataset <- dataX12[-random_sample, ]
 
 for(imputedsets in 1: length(imp$imp[[1]])) {assign(paste0("dataX",imputedsets), get(paste0("dataX",imputedsets))[-1])}
 
-#Using caret and varimp
+##Using caret and varimp
 ```{r}
 require(caret)
+require(mice)
 
 pred.coefs <- list()
 output <- data.frame()
 #for (i in 1:10) {
 for (imps in 1:length(imp$imp[[1]])) {
     temp.matrix <- complete(imp, imps) [3:27]
-    random_sample <- createDataPartition(temp.matrix$extant, p = 0.8, list = FALSE)
+    random_sample <- createDataPartition(temp.matrix$extant, p = 0.75, list = FALSE)
     training_dataset  <- temp.matrix[random_sample, ]
     testing_dataset <- temp.matrix[-random_sample, ]
+    #fitControl <- trainControl(method = "repeatedcv",
+                           #number = 10,
+                           #repeats = 100)
     model <- glm(pnorm(scale(as.numeric(extant))) ~. , data = training_dataset, family="quasibinomial")
     predictions <- predict(model, testing_dataset)
     pred.coefs[[imps]] = summary(model)$coefficients
@@ -414,5 +418,23 @@ data.frame( R2 = R2(predictions, as.numeric(testing_dataset$extant)),
 weights123 <-  as.data.frame(model$weights)
 plot(weights123$`model$weights`[weights123$`model$weights` < 0.15])
 text(weights123$`model$weights`[weights123$`model$weights` < 0.15], labels = rownames(weights123)[weights123$`model$weights` < 0.15], cex = 0.7)
+
+```
+
+##LDA
+```{r}
+require(MASS)
+
+coeffs.lda <- list()
+for (imps in 1:length(imp$imp[[1]])) {
+  temp.matrix <- complete(imp, imps) [3:27]
+  a <- lda(extant ~ ., temp.matrix)
+  coeffs.lda[[imps]] = a$scaling
+  }
+
+require(plyr)
+coeffs.lda.all <- lapply(coeffs.lda, as.data.frame)
+coeffs.lda.all1 = aaply(laply(coeffs.lda.all, as.matrix), c(2), mean)
+sort(coeffs.lda.all1)
 
 ```
