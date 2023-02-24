@@ -1252,17 +1252,17 @@ plot(asdasd)
 
 
 #choose cols to plot
-colnames(data)
+colnames(dataX1)
 
 #Get them by number
 #nameCol <- data.frame(colnames(data))
 #cols <- nameCol[c(4,6,8),]
 
 #Get them by name
-cols <- c("loctype","diet.new", "extant")
+cols <- c("mass.g","BMRres", "activity")
 
 #Fetch only the desired columns in a new df and give it row names
-data1 <- data[c(cols)]
+data1 <- dataX1[c(cols)]
 
 #convert vars to what they need to be - factor, numeric etc (if need be) (factors with NA level)
 data1[cols] <- lapply(data1[cols], factor, exclude="")
@@ -1283,6 +1283,7 @@ pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
 
 #tree1 <- drop.tip(tree1, "Felis_catus")
 
+tree1$tip.label <- gsub('_',' ',tree1$tip.label)
 
 #Circular tree with traits from data1
 circ <- ggtree(tree1, layout = "circular")
@@ -1313,11 +1314,11 @@ p5 <- gheatmap(g, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_of
 
 #heatmap using ggtree
 
-p11 <- ggtree(tree[[1]]) + 
+p11 <- ggtree(tree1) + 
     xlim(0, 150) +
     geom_tiplab(size=4, offset = 35)
 
-p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
+p21 <-  gheatmap (p11, dataX1[,c("activity", "mass.g", "BMRres")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
 
 #phylo.heatmap(tree,X,standardize=TRUE)
 
@@ -1347,13 +1348,17 @@ ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
     theme_minimal()
 
 
-speciesE %>%
-     mutate(diet.cat = factor(diet.cat)) %>%
-     ggplot() +
-     geom_boxplot(aes(x = diet.cat, y = log(mass.g)))
+dataX1 %>%
+    mutate(extant = factor(extant)) %>%
+    ggplot() +
+    geom_boxplot(aes(x = extant, y = mass.g)) + theme(panel.grid.major = 
+    element_blank(), panel.grid.minor = element_blank(), panel.background =
+    element_blank(), axis.line = element_line(colour = "black"))
 
-ggplot(speciesE) + 
-    geom_density_ridges(aes(x = log(mass.g), y = diet.cat, group = interaction(diet.cat, extant),fill = extant), alpha = 0.7)
+ggplot(dataX1) + 
+    geom_density_ridges(aes(x = mass.g, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + theme(panel.grid.major = 
+    element_blank(), panel.grid.minor = element_blank(), panel.background =
+    element_blank(), axis.line = element_line(colour = "black"))
 
 ```
 

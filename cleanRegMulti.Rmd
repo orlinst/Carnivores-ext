@@ -241,6 +241,19 @@ MIcombineP <- function(MIcombineRes,digits=3) {
 }
 
 MIcombineP(MIcombine(summaries))
+
+
+mass.g+home.range+loctype+pc+litter+diet.cat+shannon+simpson+abundance+longevity+activity+soc.complexity+gr.size+ges.days+interbirth.days+weaning.days+eqm+BMRres+afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic
+
+# (-) BMRres | mass.g | activity | litter | home range | terrestrial
+# (+) afrotropic
+
+#eq - n
+#social (soc.complexity+gr.size + pc) - n
+#reproductive (longevity + ges.days + interbirth.days + weaning.days + litter) - litter (-)
+#diet (diet.cat+shannon | simpson) - n
+#spatial (home.range + abundance + loctype + afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic) - hr(-), afro(+), locT (-)
+
 ```
 
 for (i in 1:25) {colnames(summaries[[i]])[colnames(summaries[[i]]) == 'Estimate'] <- 'estimate'}
@@ -338,6 +351,7 @@ cor.test(pred.extant/200, as.numeric(dataX12$extant), method = "s")
 
 mass.g+home.range+loctype+pc+litter+diet.cat+shannon+simpson+abundance+longevity+activity+soc.complexity+gr.size+ges.days+interbirth.days+weaning.days+eqm+BMRres+afrotropic+australasia+indomalaya+neotropic+nearctic+palearctic
 
+
 #FULL MODEL
 
 pred.extant <- array(dim = 114, dimnames=list(dataX12$species_name), data = 0)
@@ -426,15 +440,41 @@ text(weights123$`model$weights`[weights123$`model$weights` < 0.15], labels = row
 require(MASS)
 
 coeffs.lda <- list()
+probability.lda <- list()
 for (imps in 1:length(imp$imp[[1]])) {
   temp.matrix <- complete(imp, imps) [3:27]
   a <- lda(extant ~ ., temp.matrix)
   coeffs.lda[[imps]] = a$scaling
+  a1 <- lda(extant ~ ., temp.matrix, CV = TRUE)$posterior
+  probability.lda[[imps]] = a1
   }
 
 require(plyr)
 coeffs.lda.all <- lapply(coeffs.lda, as.data.frame)
 coeffs.lda.all1 = aaply(laply(coeffs.lda.all, as.matrix), c(2), mean)
 sort(coeffs.lda.all1)
+
+probability.lda.all <- lapply(probability.lda, as.data.frame)
+#probability.lda.all1 = aaply(laply(probability.lda.all, as.matrix), c(1,2), mean)
+#sort(probability.lda.all1)
+
+
+m = array(dim=114, data=0)
+for (i in 1:20){
+ x = probability.lda.all[[i]]
+ m = m + x[,2]
+}
+m=m/20
+
+plot(dataX15$extant, m)
+
+BMR <- dataX15$BMRres
+BMR[BMR<0] = 0
+BMR[BMR>0] = 1
+BMR
+fisher.test(table(BMR, dataX15$nearctic))
+
+summary(glm(nearctic ~ BMRres, data=dataX15, family=binomial))
+
 
 ```
