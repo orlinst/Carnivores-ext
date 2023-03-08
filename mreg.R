@@ -56,18 +56,47 @@ mreg<-function(formula,data,binomial=FALSE,iter=10,summary=TRUE)	{
 
 
 
-d2 = data.matrix(dataX1[,c(3,4,7:13,15:27)])
-p = matrix(NA,ncol(d2),20)
+d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)])
+p = matrix(NA,ncol(d2)+56,20)
+s = matrix(NA,ncol(d2)+56,20)
+d = list()
 
-
-for (i in 1:ncol(d2)) {
-  for (j in 1:20) {
-    d[j] = data.matrix(get(paste0("dataX", j))[,c(3,4,7:13,15:27)])
+for (j in 1:20) {
+  
+  
+    n = data.matrix(get(paste0("dataX", j))[,c(11)])
+    loctype <- table(1:128, n)
+    m1 = matrix(unlist(loctype), nrow(loctype), ncol(loctype), dimnames=list(1:128, colnames(loctype)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(12)])
+    diet.cat <- table(1:128, n)
+    m2 = matrix(unlist(diet.cat), nrow(diet.cat), ncol(diet.cat), dimnames=list(1:128, colnames(diet.cat)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(15)])
+    activity <- table(1:128, n)
+    m3 = matrix(unlist(activity), nrow(activity), ncol(activity), dimnames=list(1:128, colnames(activity)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(16)])
+    soc <- table(1:128, n)
+    m4 = matrix(unlist(soc), nrow(soc), ncol(soc), dimnames=list(1:128, colnames(soc)))
+    
+    d[[j]] = data.matrix(get(paste0("dataX", j))[,c(5:10,13,14,17:27)])
+    tempx = cbind(d[[j]], m1, m2, m3, m4)
     d0 = data.matrix(dataX1)
-    m = mreg(d0[,5] ~ d[[j]],summary=F)$residual.matrix
+    m = lsolm(d0[,3] ~ ., data = data.frame(tempx),summary=F)$rotated.matrix
+    rownames(m) <- data_final$species_name
     cat(colnames(d)[i],'\n')
-    p[i,j] <- summary(glm(as.factor(d0[,5]) ~ m[,i],family='binomial'))$coefficients[2,4]
+  for (i in 1:ncol(m)) {
+    
+    p[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,4]
+    s[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,1]
+    
+    w = as.array(m[,i])
+    dimnames(w) <- list(data_final$species_name)
+    phylop[i,j] <- summary(phyloglm(data_final$extant ~ m,method="logistic_MPLE", phy = tree[[1]]))$coefficients[2,4]
   }
 }
 
-rowMeans(p)
+
+
+cbind(rowMedians(p), colnames(m))

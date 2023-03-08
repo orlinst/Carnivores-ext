@@ -17,9 +17,17 @@ rownames(speciesE) <- speciesE$species_name
 
 
 #defining var class
-speciesE$extant <- as.factor(speciesE$extant)
-speciesE$loctype <- as.factor(speciesE$loctype)
-speciesE$diet.cat <- as.factor(speciesE$diet.cat)
+data_final$extant <- as.factor(data_final$extant)
+data_final$loctype <- as.factor(data_final$loctype)
+data_final$activity <- as.factor(data_final$activity)
+data_final$diet.cat <- as.factor(data_final$diet.cat)
+data_final$Afrotropic <- as.factor(data_final$Afrotropic)
+data_final$Indomalaya <- as.factor(data_final$Indomalaya)
+data_final$Nearctic <- as.factor(data_final$Nearctic)
+data_final$Neotropic <- as.factor(data_final$Neotropic)
+data_final$Palearctic <- as.factor(data_final$Palearctic)
+data_final$IUCN.status <- as.factor(data_final$IUCN.status)
+data_final$soc.complexity <- as.factor(data_final$soc.complexity)
 
 
 #remove NA level from diet
@@ -34,9 +42,18 @@ require(VGAM)
 #speciesE$simpson[80] <- NA
 
 #Log what needs to be logged
-speciesE$mass.g <- log(speciesE$mass.g)
-speciesE$home.range <- log(speciesE$home.range)
-speciesE$BMR <- log(speciesE$BMR)
+data_final$mass.g <- as.vector(scale(log(data_final$mass.g)))
+data_final$home.range <- as.vector(scale(log(data_final$home.range)))
+data_final$BMR <- as.vector(scale(log(data_final$BMR)))
+data_final$density <- as.vector(scale(log(data_final$density)))
+data_final$gr.size <- as.vector(scale(log(1 + data_final$gr.size))) #due to 0s
+data_final$ges.days <- as.vector(scale(log(data_final$ges.days)))
+data_final$interbirth.days <- as.vector(scale(log(data_final$interbirth.days)))
+data_final$weaning.days <- as.vector(scale(log(data_final$weaning.days)))
+data_final$longevity <- as.vector(scale(log(data_final$longevity)))
+data_final$litter <- as.vector(scale(log(data_final$litter)))
+
+
 speciesE$simpson <- log(1/(speciesE$simpson+0.00000001))
 
 
@@ -51,13 +68,13 @@ speciesE$diet.new <- NULL
 
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
 
-normalize <- function(x, ...) {
-    return((x - min(x, ...)) /(max(x, ...) - min(x, ...)))
-}
+#normalize <- function(x, ...) {
+#    return((x - min(x, ...)) /(max(x, ...) - min(x, ...)))
+#}
 
-for (i in 1:length(colnames(speciesE))){
-    if (class(speciesE[[i]]) == "numeric") 
-        speciesE[[i]] <- normalize(speciesE[[i]], na.rm = TRUE)}
+#for (i in 1:length(colnames(speciesE))){
+#    if (class(speciesE[[i]]) == "numeric") 
+#        speciesE[[i]] <- #normalize(speciesE[[i]], na.rm = TRUE)}
 
 
 data_final$activity <- michaud_additional$Activity.pattern[w]
@@ -81,7 +98,7 @@ data_final$interbirth.days <- normalize(data_final$interbirth.days, na.rm = TRUE
 data_final$weaning.days <- normalize(data_final$weaning.days, na.rm = TRUE)
 data_final$gr.size <- normalize(data_final$gr.size, na.rm = TRUE)
 
-multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F)
+multi.hist(data_final[,sapply(data_final, is.numeric)], global = F)
 
 write.table(data_final, "carn-ext.txt", sep = "\t", row.names = FALSE)
 
@@ -469,30 +486,46 @@ require(BAMMtools)
 treeF <- read.tree("Complete_phylogeny.nex")
 rownames(speciesE) <- speciesE$species_
 
-#Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
+#Adding the 5 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
 
-for (i in 1:length(tree))	{
-tip <- "Martes_caurina"
-sister <- "Martes_americana"
+for (i in 1:length(tree))	
+  
+  {
+tip1 <- "Martes_caurina"
+sister1 <- "Martes_americana"
 
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+tree[i] <- c(bind.tip(tree[[i]],tip1,where=which(tree[[i]]$tip.label==sister1),
     position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) 
+    which(tree[[i]]$tip.label==sister1))])) 
 
 
-tip <- "Conepatus_robustus"
-sister <- "Conepatus_chinga"
-sister2 <- "Conepatus_leuconotus" 
+tipa <- "Conepatus_robustus"
+sistera <- "Conepatus_chinga"
+sister2a <- "Conepatus_leuconotus" 
 
-tree[i] <- c(bind.tip(tree[[i]],tip,where=getmrca(tree[[i]], sister, sister2),
-    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sister, sister2)])) 
+tree[i] <- c(bind.tip(tree[[i]],tipa,where=getmrca(tree[[i]], sistera, sister2a),
+    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sistera, sister2a)])) 
 
-tip <- "Felis_lybica"
-sister <- "Felis_silvestris"
+tipb <- "Felis_lybica"
+sisterb <- "Felis_silvestris"
 
-tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+tree[i] <- c(bind.tip(tree[[i]],tipb,where=which(tree[[i]]$tip.label==sisterb),
     position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
-    which(tree[[i]]$tip.label==sister))])) }
+    which(tree[[i]]$tip.label==sisterb))])) 
+
+tipc <- "Canis_mosbachensis"
+sisterc <- "Canis_lupus"
+
+tree[i] <- c(bind.tip(tree[[i]],tipc,where=which(tree[[i]]$tip.label==sisterc),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sisterc))])) 
+
+tipd <- "Ursus_deningeri"
+sisterd <- "Ursus_spelaeus"
+
+tree[i] <- c(bind.tip(tree[[i]],tipd,where=which(tree[[i]]$tip.label==sisterd),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sisterd))])) }
 
 
 grep("Martes", tree[[7]]$tip.label, value = TRUE)
@@ -548,6 +581,31 @@ sister <- "Conepatus_leuconotus"
 treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
     position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
     which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for (i in 1:length(tree))	{
+tip <- "Canis_mosbachensis"
+sister <- "Canis_lupus"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Ursus_deningeri"
+sister <- "Ursus_spelaeus"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+
+
 
 
 rm(list=ls(pattern="treeX"))
@@ -1092,7 +1150,7 @@ data.pc$Extinct0 <- NULL
 require(mice)
 #imp <- mice(data.pc, 20, maxit = 5, method = "norm")
 
-imp <- mice(data_final, 20, maxit = 100, method = c("", "", "midastouch", "midastouch", "logreg", "polyreg", "midastouch", "midastouch", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "logreg", "logreg","logreg","logreg","logreg","logreg"))
+imp <- mice(data_final, 20, maxit = 100, method = c("", "", "logreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch","midastouch", "logreg", "logreg","logreg","logreg","logreg"))
 
 
 save(imp, file = "imp20x100.RData")
@@ -1113,6 +1171,11 @@ for(imputedsets in 1: length(imp$imp[[1]])) {
   #extract imputed sets in separate dfs
   assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
 }
+
+for(i in 1: 20) {
+    assign(paste0("dataX",i), data_final$species_name)
+}
+
 
 #extract diet.cat
 for(imputedsets in 1: length(imp$imp[[1]])) {
