@@ -1322,7 +1322,7 @@ colnames(dataX1)
 #cols <- nameCol[c(4,6,8),]
 
 #Get them by name
-cols <- c("mass.g","BMRres", "activity")
+cols <- c("BMR", "activity")
 
 #Fetch only the desired columns in a new df and give it row names
 data1 <- dataX1[c(cols)]
@@ -1340,6 +1340,26 @@ tree1 <- tree[[2]]
 require(ggtree)
 require(ggplot2)
 require(wesanderson)
+
+vioplot(data_final$BMR ~ data_final$IUCN.status)
+vioplot(log(carn.ext$BMR)[carn.ext$IUCN.status == "Least Concern"])
+(anova)
+
+#Violin plots
+
+#remove missing conepatus and felis catus
+data_final1 <- data_final[-c(27,60),]
+
+data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct"))
+p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=BMR, fill=IUCN.status)) +   
+      geom_violin(trim = FALSE, alpha = 0.5) + 
+      geom_boxplot(width = 0.1) +
+      theme(legend.position = "none") +
+      #scale_fill_hue(labels = c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct")) 
+      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct"))
+
+p
+
 
 pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
 

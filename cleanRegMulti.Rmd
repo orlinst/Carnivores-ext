@@ -8,7 +8,7 @@ output: html_notebook
 require(phytools)
 require(mulTree)
 
-tree <- read.nexus("CompletePhyCarn.nex")
+tree <- read.tree("CompletePhyCarn.nex")
 data_final <- read.delim("carn-ext.txt", header=T)
 rownames(data_final) <- data_final$species_name
 
@@ -617,7 +617,8 @@ d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)])
 p = matrix(NA,ncol(d2)+31,20)
 s = matrix(NA,ncol(d2)+31,20)
 d = list()
-phylop = matrix(NA,ncol(d2)+31,20)
+#phylop = matrix(NA,ncol(d2)+31,20)
+phylop=array(dim=c(ncol(d2)+31,20, 1000))
 phylopmulti = matrix(NA,1000,1000)
 
 for (j in 1:20) {
@@ -645,7 +646,7 @@ for (j in 1:20) {
     cat(colnames(d)[i],'\n')
   #for (i in 1:ncol(m)) {
     #add var numbers
-  for (i in c(2, 32)) {
+  for (i in 1:40) {
      
     p[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,4]
     s[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,1]
@@ -656,13 +657,17 @@ for (j in 1:20) {
     temp = cbind(m[,i], as.integer(data_final$extant)-1)
     colnames(temp) = c("whateva", "extant")
     rownames(temp) = rownames(m)
-  for (t in 77:82) { 
-    phylopmulti[i, t] <- phylop[i,j] <- summary(phyloglm(extant ~ ., data = data.frame(temp), btol = 30, method="logistic_IG10", phy = tree[[t]]))$coefficients[2,"p.value"]
-    #phylopmulti[t] <- rowMedians(phylop)
-#phylop[1:19,j] <- summary(phyloglm(V41 ~ ., data = data.frame(cbind(m, as.integer(data_final$extant)-1)), method="logistic_MPLE", phy = tree[[1]]))$coefficients[2:20,"p.value"]
-  }}
+  for (t in c(70:73, 175:185)) { 
+    phylop[i,j,t] <- summary(phyloglm(extant ~ ., data = data.frame(temp), btol = 30, method="logistic_IG10", phy = tree[[t]]))$coefficients[2,"p.value"]
+    #phylop[1:19,j] <- summary(phyloglm(V41 ~ ., data = data.frame(cbind(m, as.integer(data_final$extant)-1)), method="logistic_MPLE", phy = tree[[1]]))$coefficients[2:20,"p.value"]
+    }
+    }
 }
 
+medians <- array()
+for(i in 1:2) {
+medians[i] <- median(phylop[i,,], na.rm = T)
+}
 
 options("scipen"=100, "digits"=4)
 phylopmulti[32, ]
