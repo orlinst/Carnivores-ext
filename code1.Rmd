@@ -1337,28 +1337,110 @@ sapply(data1, class)
 #get 1 tree
 tree1 <- tree[[2]]
 
-require(ggtree)
-require(ggplot2)
+library(ggtreeExtra)
+library(ggstar)
+library(ggplot2)
+library(ggtree)
+library(treeio)
+library(ggnewscale)
 require(wesanderson)
+
 
 vioplot(data_final$BMR ~ data_final$IUCN.status)
 vioplot(log(carn.ext$BMR)[carn.ext$IUCN.status == "Least Concern"])
 (anova)
 
-#Violin plots
+
+#circular tree
+tree1 <- tree[[453]]
+cols <- c("activity", "extant")
+data1 <- dataX15[c(cols)]   #all
+data1$BMR <- data_final$BMR
+data1$names <- rownames(data1) #add names col
+data2 <- data1[-c(1,3,4)]   #only status
+data1$Activity <- data1$activity
+
+levels(data1$extant) <- c('Extinct', 'Extant')
+levels(data3$extant) <- c('Extinct', 'Extant')
+data1$Activity <- factor(data1$activity, levels=c("Diu", "Cath/Cre", "Noc"))
+levels(data1$Activity) <- c("Diurnal", "Cathemeral/Crepuscular", "Nocturnal")
+
+circ <- ggtree(tree1, layout = "circular")
+
+p1 <- gheatmap(circ, data3, offset=0.1, width=.2,hjust = 0.2, colnames = FALSE,
+         colnames_angle=95, colnames_offset_y = 3) + scale_fill_manual(values=c("lavender","tomato3"), name="Status") +
+    theme(#legend.position=c(0.96, 0.5), # the position of legend.
+        legend.background=element_rect(fill=NA), # the background of legend.
+        legend.title=element_text(size=13), # the title size of legend.
+        legend.text=element_text(size=12), # the text size of legend.
+        legend.spacing.y = unit(0.05, "cm"),  # the distance of legends (y orientation).
+        legend.key.size = unit(0.35, "cm")
+    ) 
+
+p2 <- p1 + 
+    new_scale_fill() +
+    geom_fruit(
+        data=data1,
+        geom=geom_col,
+        mapping=aes(y=names, x=(log(BMR)-5), fill=Activity),
+        pwidth=0.6,
+        offset=0.33,
+        grid.params=list() # add the grid line of the external bar plot.
+    ) + 
+    scale_fill_manual(
+        values=c("#F5C710", "olivedrab3", "dodgerblue3"),
+        guide=guide_legend(keywidth=0.5, keyheight=0.5, order=6)
+    ) +
+    theme(#legend.position=c(0.96, 0.5), # the position of legend.
+        legend.background=element_rect(fill=NA), # the background of legend.
+        legend.title=element_text(size=13), # the title size of legend.
+        legend.text=element_text(size=12), # the text size of legend.
+        legend.spacing.y = unit(0.05, "cm"),  # the distance of legends (y orientation).
+        legend.key.size = unit(0.5, "cm")
+    ) 
+
+
+
+##############################################3
+
+
+#Violin plots -- (anova)
 
 #remove missing conepatus and felis catus
 data_final1 <- data_final[-c(27,60),]
 
-data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct"))
+data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
 p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=BMR, fill=IUCN.status)) +   
       geom_violin(trim = FALSE, alpha = 0.5) + 
       geom_boxplot(width = 0.1) +
-      theme(legend.position = "none") +
+      theme(legend.position = "none", axis.text.x = element_text(size = 15)) +
       #scale_fill_hue(labels = c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct")) 
-      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct"))
+      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
 
 p
+###########################
+#Ridge plot
+library(ggridges)
+require(dplyr)
+
+ggplot(dataX1) + 
+    geom_density_ridges(aes(x = BMR, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + theme(panel.grid.major = 
+    element_blank(), panel.grid.minor = element_blank(), panel.background =
+    element_blank(), axis.line = element_line(colour = "black"))
+
+MORE
+
+ggplot(dataX15) + 
+    geom_density_ridges(aes(x = dataX15$BMR, y = Activity, group = interaction(Activity, Status),fill = Status), alpha = 0.7) +
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(size=12), axis.text.y = element_text(size=12), axis.title=element_text(size=12,face="bold")) +  scale_x_continuous(name="Ln Basal metabolic rate (ml O2/h)") + scale_fill_manual(values=c("firebrick", "steelblue"))
+
+#steelblue
+#forestgreen
+
+
+
+
+
 
 
 pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
