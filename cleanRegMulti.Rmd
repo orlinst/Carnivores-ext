@@ -610,13 +610,13 @@ write.table(data_final2023, "data_final2023.txt", sep = "\t", row.names = FALSE)
 #lsolm calls
 ```{r}
 
-
-
-
 d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)])
 p = matrix(NA,ncol(d2)+31,20)
 s = matrix(NA,ncol(d2)+31,20)
 d = list()
+
+g = sample(1:1000, 100, replace=F)
+
 #phylop = matrix(NA,ncol(d2)+31,20)
 phylop=array(dim=c(ncol(d2)+31,20, 1000))
 phylopmulti = matrix(NA,1000,1000)
@@ -654,10 +654,10 @@ for (j in 1:20) {
     w = as.array(m[,i])
     dimnames(w) <- list(data_final$species_name)
   
-    temp = cbind(m[,i], as.integer(data_final$extant)-1)
+    temp = cbind(m[,i], as.integer(data_final$extant)) #)-1)
     colnames(temp) = c("whateva", "extant")
     rownames(temp) = rownames(m)
-  for (t in c(70:73, 175:185)) { 
+  for (t in g) { 
     phylop[i,j,t] <- summary(phyloglm(extant ~ ., data = data.frame(temp), btol = 30, method="logistic_IG10", phy = tree[[t]]))$coefficients[2,"p.value"]
     #phylop[1:19,j] <- summary(phyloglm(V41 ~ ., data = data.frame(cbind(m, as.integer(data_final$extant)-1)), method="logistic_MPLE", phy = tree[[1]]))$coefficients[2:20,"p.value"]
     }
@@ -665,7 +665,7 @@ for (j in 1:20) {
 }
 
 medians <- array()
-for(i in 1:2) {
+for(i in 1:40) {
 medians[i] <- median(phylop[i,,], na.rm = T)
 }
 
@@ -673,7 +673,7 @@ options("scipen"=100, "digits"=4)
 phylopmulti[32, ]
 median(unlist(phylopmulti[32, ]), na.rm=TRUE)
 
-cbind(rowMedians(p), colnames(m))
+cbind(rowMedians(p[1:40,]), colnames(m))
 
 }}
 
