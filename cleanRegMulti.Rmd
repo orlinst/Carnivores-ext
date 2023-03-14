@@ -610,6 +610,9 @@ write.table(data_final2023, "data_final2023.txt", sep = "\t", row.names = FALSE)
 #lsolm calls
 ```{r}
 
+require(matrixStats)
+require(phylolm)
+
 d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)])
 p = matrix(NA,ncol(d2)+31,20)
 s = matrix(NA,ncol(d2)+31,20)
@@ -642,7 +645,7 @@ for (j in 1:20) {
     tempx = cbind(d[[j]], m1, m2, m3, m4)
     d0 = data.matrix(dataX1)
     m = lsolm(d0[,3] ~ ., data = data.frame(tempx),summary=F)$rotated.matrix
-    rownames(m) <- data_final$species_name
+    rownames(m) <- dataX1$species_name
     cat(colnames(d)[i],'\n')
   #for (i in 1:ncol(m)) {
     #add var numbers

@@ -1410,12 +1410,17 @@ p2 <- p1 +
 data_final1 <- data_final[-c(27,60),]
 
 data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
-p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=BMR, fill=IUCN.status)) +   
+p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=(log(BMR)-5), fill=IUCN.status)) +   
       geom_violin(trim = FALSE, alpha = 0.5) + 
       geom_boxplot(width = 0.1) +
-      theme(legend.position = "none", axis.text.x = element_text(size = 15)) +
+      theme(legend.position = "none", 
+            axis.text.x = element_text(size = 14), 
+            axis.title=element_text(size=14,face="bold"),
+            panel.background = element_rect(fill = "white", colour = "grey50")) +
       #scale_fill_hue(labels = c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct")) 
-      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
+      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct")) +
+      scale_y_continuous(name = expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)"))
+      
 
 p
 ###########################
@@ -1424,9 +1429,10 @@ library(ggridges)
 require(dplyr)
 
 ggplot(dataX1) + 
-    geom_density_ridges(aes(x = BMR, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + theme(panel.grid.major = 
-    element_blank(), panel.grid.minor = element_blank(), panel.background =
-    element_blank(), axis.line = element_line(colour = "black"))
+    geom_density_ridges(aes(x = BMR, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + 
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(), 
+          panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 MORE
 
@@ -1439,7 +1445,54 @@ ggplot(dataX15) +
 
 
 
+#############################
+#Dotplot
 
+output1.phylo.tall
+
+#right_label <- output %>%
+ #   group_by(Variable) %>%
+  #  arrange(desc(No)) %>%
+   # top_n(1)
+
+#left_label <- output %>%
+ #   group_by(Variable) %>%
+  #  arrange(desc(No)) %>%
+   # slice(2)
+
+
+p <-ggplot(output, aes(log2(No)+10, reorder(Variable, No))) +
+    geom_point(aes(color = Run1, shape=Run1), size = 4.5, position = position_dodge(0.5)) +
+    #geom_line(aes(group = Variable)) +
+    scale_shape_manual(values=c(19, 19, 19, 1), guide = "none") +
+    scale_color_manual(labels = c('phylogenetic 1', 'phylogenetic 2', 'phylogenetic 3', 'non-phylogenetic'), 
+                       values=c('gold1','dodgerblue3', 'firebrick1', 'black')) +
+    theme(panel.grid.major.y = element_line(color = "black",
+                                        linewidth = 0.1,
+                                        linetype = "dotted"), 
+          panel.grid.minor = element_blank(), 
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"), 
+          axis.text.x = element_text(size=12), 
+          axis.text.y = element_text(size=12), 
+          axis.title=element_text(size=14,face="bold"),
+          legend.position="top") +
+  labs(color='Regression type:') +
+  xlab("p-value (log scale)") + 
+  ylab("Trait") +
+  #scale_x_continuous(limits = c(0, 0.9), breaks = scales::pretty_breaks(n = 20)) +
+  geom_vline(xintercept=5.68, linetype = "dotted") +
+  geom_vline(xintercept=2.36, linetype = "dotted") +
+  annotate("text", x=5.58, y=35, label="p<0.05", angle=90, size = 3.3, colour="dodgerblue3") +
+  annotate("text", x=2.26, y=35.2, label="p<0.005", angle=90, size = 3.3, colour="dodgerblue3") +
+  scale_x_continuous(breaks=c(1.03, 3.35, 4.94, 5.67, 8), labels=c("1.03" = "0.002", "3.35" ="0.01", "4.94" = "0.03",
+                              "5.68" = ">0.05", "8" = ""))
+  #scale_x_break(c(1.8, 3), scales=2)
+    #geom_text(data = right_label, aes(color = Run1, label = round(No, 2)),
+                  #size = 3, hjust = -.5, position = position_dodge(0.5)) +
+    #geom_text(data = left_label, aes(color = Run1, label = round(No, 2)),
+                  #size = 3, hjust = 1.5, position = position_dodge(0.5))
+  
 
 
 
