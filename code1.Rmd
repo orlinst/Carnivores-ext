@@ -1357,13 +1357,13 @@ cols <- c("activity", "extant")
 data1 <- dataX15[c(cols)]   #all
 data1$BMR <- data_final$BMR
 data1$names <- rownames(data1) #add names col
-data2 <- data1[-c(1,3,4)]   #only status
+data3 <- data1[-c(1,3,4)]   #only status
 data1$Activity <- data1$activity
 
-levels(data1$extant) <- c('Extinct', 'Extant')
-levels(data3$extant) <- c('Extinct', 'Extant')
+levels(data1$extant) <- c('extinct', 'extant')
+levels(data3$extant) <- c('extinct', 'extant')
 data1$Activity <- factor(data1$activity, levels=c("Diu", "Cath/Cre", "Noc"))
-levels(data1$Activity) <- c("Diurnal", "Cathemeral/Crepuscular", "Nocturnal")
+levels(data1$Activity) <- c("diurnal", "cathemeral/crepuscular", "nocturnal")
 
 circ <- ggtree(tree1, layout = "circular")
 
@@ -1408,18 +1408,22 @@ p2 <- p1 +
 
 #remove missing conepatus and felis catus
 data_final1 <- data_final[-c(27,60),]
+data_final1$activity <- data_final$activity
 
+data_final1$IUCN.status[is.na(data_final1$IUCN.status)] = "Extinct"
 data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
 p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=(log(BMR)-5), fill=IUCN.status)) +   
-      geom_violin(trim = FALSE, alpha = 0.5) + 
+      geom_violin(trim = FALSE, alpha = 0.9) + 
       geom_boxplot(width = 0.1) +
-      theme(legend.position = "none", 
-            axis.text.x = element_text(size = 14), 
-            axis.title=element_text(size=14,face="bold"),
-            panel.background = element_rect(fill = "white", colour = "grey50")) +
+      theme(legend.position = "none",
+            axis.title.x=element_text(size=14,face="bold", margin=margin(20,0,0,0)),
+            axis.title.y=element_text(size=14,face="bold", margin=margin(0,20,0,0)),
+            panel.background = element_rect(fill = "white", colour = "grey50"),
+            axis.text = element_text(size=12)) +
       #scale_fill_hue(labels = c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct")) 
       scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct")) +
-      scale_y_continuous(name = expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)"))
+      scale_y_continuous(name = expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)")) +
+      scale_fill_manual(values = c("dodgerblue1", '#008080', "forestgreen", "gold2", "brown2"))
       
 
 p
@@ -1428,17 +1432,37 @@ p
 library(ggridges)
 require(dplyr)
 
-ggplot(dataX1) + 
-    geom_density_ridges(aes(x = BMR, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + 
-    theme(panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank(), 
-          panel.background = element_blank(), axis.line = element_line(colour = "black"))
+#ggplot(dataX1) + 
+ #   geom_density_ridges(aes(x = BMR, y = activity, group = interaction(activity, extant),fill = extant), alpha = 0.7)  + 
+  #  theme(panel.grid.major = element_blank(), 
+   #       panel.grid.minor = element_blank(), 
+    #      panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
-MORE
+data_temp <- data.frame()
 
-ggplot(dataX15) + 
-    geom_density_ridges(aes(x = dataX15$BMR, y = Activity, group = interaction(Activity, Status),fill = Status), alpha = 0.7) +
-          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"), axis.text.x = element_text(size=12), axis.text.y = element_text(size=12), axis.title=element_text(size=12,face="bold")) +  scale_x_continuous(name="Ln Basal metabolic rate (ml O2/h)") + scale_fill_manual(values=c("firebrick", "steelblue"))
+data_temp <- as.data.frame(dataX15$activity)
+data_temp$Activity <- dataX15$activity
+data_temp$Status <- dataX15$extant
+data_temp$BMR <- dataX15$BMR
+data_temp$`dataX15$activity` <- NULL
+
+data_temp$Activity <- factor(data_temp$Activity, labels=c("Cathemeral/crepuscular", "Diurnal", "Nocturnal"))
+data_temp$Activity <- ordered(data_temp$Activity, levels = c("Diurnal", "Cathemeral/crepuscular", "Nocturnal"))
+data_temp$Status <- factor(data_temp$Status, labels=c("extinct","extant"))
+
+ggplot(data_temp) + 
+    geom_density_ridges(aes(x = BMR, y = Activity, group = interaction(Activity, Status),fill = Status), alpha = 0.7) +
+          theme(panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(), 
+                panel.background = element_blank(), 
+                axis.line = element_line(colour = "black"), 
+                axis.text = element_text(size=12, face="bold"), 
+                axis.title.x=element_text(size=14,face="bold", margin=margin(20,0,0,0)),
+                text = element_text(size = 14),
+                legend.spacing.y = unit(0.5, 'cm')) +
+  guides(fill = guide_legend(byrow = TRUE)) +
+  scale_x_continuous(name= expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)")) + 
+  scale_fill_manual(values=c("firebrick1", "blue3"))
 
 #steelblue
 #forestgreen
@@ -1461,7 +1485,7 @@ output1.phylo.tall
    # slice(2)
 
 
-p <-ggplot(output, aes(log2(No)+10, reorder(Variable, No))) +
+p <-ggplot(output, aes(log2(No)+10, reorder(Variable, -No))) +
     geom_point(aes(color = Run1, shape=Run1), size = 4.5, position = position_dodge(0.5)) +
     #geom_line(aes(group = Variable)) +
     scale_shape_manual(values=c(19, 19, 19, 1), guide = "none") +
@@ -1481,12 +1505,11 @@ p <-ggplot(output, aes(log2(No)+10, reorder(Variable, No))) +
   xlab("p-value (log scale)") + 
   ylab("Trait") +
   #scale_x_continuous(limits = c(0, 0.9), breaks = scales::pretty_breaks(n = 20)) +
-  geom_vline(xintercept=5.68, linetype = "dotted") +
-  geom_vline(xintercept=2.36, linetype = "dotted") +
+  geom_vline(xintercept=5.686, linetype = "dotted") +
+  geom_vline(xintercept=0.034, linetype = "dotted") +
   annotate("text", x=5.58, y=35, label="p<0.05", angle=90, size = 3.3, colour="dodgerblue3") +
-  annotate("text", x=2.26, y=35.2, label="p<0.005", angle=90, size = 3.3, colour="dodgerblue3") +
-  scale_x_continuous(breaks=c(1.03, 3.35, 4.94, 5.67, 8), labels=c("1.03" = "0.002", "3.35" ="0.01", "4.94" = "0.03",
-                              "5.68" = ">0.05", "8" = ""))
+  annotate("text", x=-0.05 , y=35.2, label="p<0.001", angle=90, size = 3.3, colour="dodgerblue3") +
+  scale_x_continuous(breaks=c(0.034, 3.356, 5.68), labels=c("0.034" = "0.001", "3.356" ="0.01", "5.68" = ">0.05"))
   #scale_x_break(c(1.8, 3), scales=2)
     #geom_text(data = right_label, aes(color = Run1, label = round(No, 2)),
                   #size = 3, hjust = -.5, position = position_dodge(0.5)) +
