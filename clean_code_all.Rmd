@@ -1,0 +1,589 @@
+---
+title: "Carnivore extinction"
+output:
+  html_document: default
+  pdf_document: default
+date: "2023-03-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+#Data preparation
+
+##Diet categories from scat
+```{r}
+
+s2 = read.delim('all_scats.txt')
+s2[is.na(s2)] = 0
+s2 = s2[,33:54]
+s2 = t(t(s2) / colSums(s2))
+
+s = read.delim('all_scats.txt')
+sp = paste(s[,29],s[,30])
+s = s[,33:54]
+s[is.na(s)] = 0
+s = s / rowSums(s)
+
+d = matrix(nrow=nrow(s),ncol=6,dimnames=list(sp,c('vert','invert','frug','plant','aquatic','fungus')))
+
+d[,1] = rowSums(s[,1:4])
+d[,2] = rowSums(s[,7:12])
+d[,3] = rowSums(s[,14:17])
+d[,4] = rowSums(s[,18:20])
+d[,5] = rowSums(s[,c(5,6,13)])
+d[,6] = rowSums(s[,21:22])
+
+plot(hclust(dist(d)),labels=sp,cex=0.5)
+
+k = kmeans(d,centers=5)$clust
+
+sort(k)
+
+v = array()
+
+for (i in 1:20)	{
+	v[i] = (kmeans(d,centers=i)$tot.withinss / kmeans(d,centers=i)$totss)
+}
+
+plot(v,type='l')
+
+
+barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
+
+
+#add to main datatset
+dc.match <- match(data_final$species, names(k))
+data_final$diet.cat <- k1$k[dc.match]
+
+
+#ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
+
+
+#Indeces
+require(vegan)
+
+s2 = read.delim('all_scats.txt')
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+
+s2 = read.delim('all_scats.txt')
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+rownames(scat.species) <- scat.species$species
+scat.species$species <- NULL
+scat.species[,1:22] <- sapply(scat.species[,1:22],as.integer)
+
+sapply(scat.species, class)
+#scat.species <- as.data.frame(scat.species)
+
+scat.species$shannon <- diversity(scat.species, index="shannon") #calculate the indeces ONE BY ONE!
+scat.species$simpson <- rarefy(scat.species, 2) - 1 #unbiased simpson
+
+ 
+scat.match <- match(data_final$species, row.names(scat.species))
+data_final$shannon <- scat.species$shannon[scat.match]
+data_final$simpson <- scat.species$simpson[scat.match]
+```
+
+##Camera trap abundance calc
+```{r}
+
+register = read.delim('register.txt')
+
+#Pop density approximated
+
+#load up camera trap data
+register$name <- paste(register[,'genus'], register[,'species'])
+register_clean <- register[,c("name", "count", "count.per.day", "sample.no")]
+register_clean$ratio <- round(register_clean$count/register_clean$count.per.day)
+reg.species <- aggregate(. ~ name, data=register_clean, FUN=sum)
+species.number <- as.data.frame(table(register_clean$name))
+sp.match <- match(reg.species$name, species.number$Var1)
+reg.species$number <- species.number$Freq[sp.match]
+reg.species$rate <- (reg.species$count - reg.species$number) / reg.species$ratio
+
+
+reg.match <- match(speciesE$species, reg.species$name)
+speciesE$abundance <- reg.species$rate[reg.match]
+speciesE$median.abundance <- NULL
+
+
+register_sample_co <- register_clean[,c(2:4)]
+register_sample_co <- register_sample_co$count/register_sample_co$count.per.day
+
+register_sample_co <- aggregate(. ~ sample.no, data=register_sample_co, FUN=sum)
+sample.match <- match(register_sample_co$sample.no, register_clean$sample.no)
+register_clean$total <- register_sample_co$count[sample.match]
+register_clean$sample.no <- NULL
+
+register_clean$density <- round(register_clean$count/register_clean$count.per.day)
+
+```
+
+
+##Tree manipulation
+```{r}
+require(phytools)
+require(BAMMtools)
+require(mulTree)
+
+
+tree <- read.tree("Complete_phylogeny.nex") #load all 1000 trees
+rownames(data_final) <- data_final$species_name
+
+#clean the species not in the dataset
+clean <- clean.data(data_final, tree)
+tree <- clean$tree
+
+#Add the 5 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
+
+for (i in 1:length(tree))	
+  
+  {
+tip1 <- "Martes_caurina"
+sister1 <- "Martes_americana"
+
+tree[i] <- c(bind.tip(tree[[i]],tip1,where=which(tree[[i]]$tip.label==sister1),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister1))])) 
+
+
+tipa <- "Conepatus_robustus"
+sistera <- "Conepatus_chinga"
+sister2a <- "Conepatus_leuconotus" 
+
+tree[i] <- c(bind.tip(tree[[i]],tipa,where=getmrca(tree[[i]], sistera, sister2a),
+    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sistera, sister2a)])) 
+
+tipb <- "Felis_lybica"
+sisterb <- "Felis_silvestris"
+
+tree[i] <- c(bind.tip(tree[[i]],tipb,where=which(tree[[i]]$tip.label==sisterb),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sisterb))])) 
+
+tipc <- "Canis_mosbachensis"
+sisterc <- "Canis_lupus"
+
+tree[i] <- c(bind.tip(tree[[i]],tipc,where=which(tree[[i]]$tip.label==sisterc),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sisterc))])) 
+
+tipd <- "Ursus_deningeri"
+sisterd <- "Ursus_spelaeus"
+
+tree[i] <- c(bind.tip(tree[[i]],tipd,where=which(tree[[i]]$tip.label==sisterd),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sisterd))])) }
+
+#save the new tree with write.tree as CompletePhyCarn.nex
+```
+
+## Imputation + missingness analyses + phy sig
+```{r}
+#Impute data
+require(mice)
+
+#Before imputation, transform/scale and select the var type - #defining var class, #log and scale, #Yeo Johnson transform of abundance from 'Load up data" section
+
+imp <- mice(data_final, 20, maxit = 100, method = c("", "", "logreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch","midastouch", "logreg", "logreg","logreg","logreg","logreg"))
+
+
+save(imp, file = "imp20x100.RData")
+load("./imp20x100.Rdata")
+
+#Analyse missingness
+
+gg_miss_var(data_final)
+vis_miss(data_final)
+
+plot(imp)
+densityplot(imp)
+stripplot(imp, pch = 20, cex = 1.2)
+
+
+#Test for missing completely at random
+require(naniar)
+mcar_test(data_final) 
+
+#Check for D phylo signal in missing data
+require(sensiPhy)
+#binvar=select each variables one by one
+miss.phylo.d (tree, data_final, binvar="VARNAME")
+
+#Check for phylogenetic signal in continuous variables
+d2 <- as.matrix(data_final$VARNAME) #
+rownames(d2) <-data_final$species_name
+phylosig(tree,d2,method="lambda",test=TRUE)
+phylosig(tree,d2,method="K",test=TRUE)
+
+```
+
+
+#Load up data/tree/imputations
+```{r}
+require(phytools)
+require(mulTree)
+
+tree <- read.tree("CompletePhyCarn.nex")
+data_final <- read.delim("carn-ext.txt", header=T)
+rownames(data_final) <- data_final$species_name
+
+#defining var class
+data_final$extant <- as.factor(data_final$extant)
+data_final$loctype <- as.factor(data_final$loctype)
+data_final$activity <- as.factor(data_final$activity)
+data_final$diet.cat <- as.factor(data_final$diet.cat)
+data_final$Afrotropic <- as.factor(data_final$Afrotropic)
+data_final$Indomalaya <- as.factor(data_final$Indomalaya)
+data_final$Nearctic <- as.factor(data_final$Nearctic)
+data_final$Neotropic <- as.factor(data_final$Neotropic)
+data_final$Palearctic <- as.factor(data_final$Palearctic)
+data_final$IUCN.status <- as.factor(data_final$IUCN.status)
+data_final$soc.complexity <- as.factor(data_final$soc.complexity)
+
+#log and scale
+data_final$mass.g <- as.vector(scale(log(data_final$mass.g)))
+data_final$home.range <- as.vector(scale(log(data_final$home.range)))
+data_final$BMR <- as.vector(scale(log(data_final$BMR)))
+data_final$density <- as.vector(scale(log(data_final$density)))
+data_final$gr.size <- as.vector(scale(log(1 + data_final$gr.size))) #due to 0s
+data_final$ges.days <- as.vector(scale(log(data_final$ges.days)))
+data_final$interbirth.days <- as.vector(scale(log(data_final$interbirth.days)))
+data_final$weaning.days <- as.vector(scale(log(data_final$weaning.days)))
+data_final$longevity <- as.vector(scale(log(data_final$longevity)))
+data_final$litter <- as.vector(scale(log(data_final$litter)))
+
+#Yeo Johnson transform of abundance
+yj <- function (y) {((y+1)^0.0001 - 1) / 0.0001}
+a <- (which(!is.na(data_final$abundance)))
+a1 <- yj(which(!is.na(data_final$abundance)))
+data_final$abundance[a] <- a1[a] #transform Yeo–Johnson
+
+
+#final check
+clean <- clean.data(data_final, tree)
+#tree <- clean$tree 
+#tree1 <- clean$tree[[2]]
+#data <- clean$data
+
+#Load imputed datasets
+
+require(mice)
+load("./imp20x100.Rdata")
+
+#unpack the imputed sets in dataX[n]
+
+for(imputedsets in 1: length(imp$imp[[1]])) {
+  #extract imputed sets in separate dfs
+  assign(paste0("dataX",imputedsets), complete(imp, imputedsets))
+}
+
+```
+
+
+#Analyses
+```{r}
+
+require(matrixStats)
+require(phylolm)
+
+d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)]) #select abd break down categorical variables
+p = matrix(NA,ncol(d2)+31,20) #create dummy matrix
+s = matrix(NA,ncol(d2)+31,20) #create dummy matrix
+d = list()
+
+g = sample(1:1000, 100, replace=F) #choose 100 trees at random from 1000
+
+phylop=array(dim=c(ncol(d2)+31,20, 1000)) #store p values
+phylopmulti = matrix(NA,1000,1000)        #store p values from phylo regression
+
+for (j in 1:20) {                         #20 = number of datasets
+    n = data.matrix(get(paste0("dataX", j))[,c(11)])
+    loctype <- table(1:128, n)
+    m1 = matrix(unlist(loctype), nrow(loctype), ncol(loctype), dimnames=list(1:128, colnames(loctype)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(12)])
+    diet.cat <- table(1:128, n)
+    m2 = matrix(unlist(diet.cat), nrow(diet.cat), ncol(diet.cat), dimnames=list(1:128, colnames(diet.cat)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(15)])
+    activity <- table(1:128, n)
+    m3 = matrix(unlist(activity), nrow(activity), ncol(activity), dimnames=list(1:128, colnames(activity)))
+    
+    n = data.matrix(get(paste0("dataX", j))[,c(16)])
+    soc <- table(1:128, n)
+    m4 = matrix(unlist(soc), nrow(soc), ncol(soc), dimnames=list(1:128, colnames(soc)))
+    
+    d[[j]] = data.matrix(get(paste0("dataX", j))[,c(5:10,13,14,17:27)])
+    tempx = cbind(d[[j]], m1, m2, m3, m4)
+    d0 = data.matrix(dataX1)
+    m = lsolm(d0[,3] ~ ., data = data.frame(tempx),summary=F)$rotated.matrix
+    rownames(m) <- dataX1$species_name
+    cat(colnames(d)[i],'\n')
+  #for (i in 1:ncol(m)) {
+    #add var numbers
+  for (i in 1:40) {                     #40 = the number of variables after breaking down categorical vars
+     
+    p[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,4]
+    s[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,1]
+    stdevs <- which(rowSds(t(m))!=0)
+    w = as.array(m[,i])
+    dimnames(w) <- list(data_final$species_name)
+  
+    temp = cbind(m[,i], as.integer(data_final$extant)) #)-1)
+    colnames(temp) = c("whateva", "extant")
+    rownames(temp) = rownames(m)
+  for (t in g) { 
+    phylop[i,j,t] <- summary(phyloglm(extant ~ ., data = data.frame(temp), btol = 30, method="logistic_IG10", phy = tree[[t]]))$coefficients[2,"p.value"]
+  }
+  }
+}
+
+#Pool medians
+medians <- array()
+for(i in 1:40) {
+medians[i] <- median(phylop[i,,], na.rm = T)
+}
+
+options("scipen"=100, "digits"=4)
+phylopmulti[32, ]
+median(unlist(phylopmulti[32, ]), na.rm=TRUE)
+
+cbind(rowMedians(p[1:40,]), colnames(m))
+
+aaa <- sort(rowMedians(phylop))
+
+# use p.adjust Holm
+
+#ANOVA on IUCN status and BMR
+mod1 <- lm(data_final$BMR ~ data_final$IUCN.status)
+anova(mod1)
+
+```
+
+
+#Plotting
+```{r}
+
+#Plot histogram of all vars
+
+require(psych)
+multi.hist(data_final[,sapply(data_final, is.numeric)], global = F)
+
+#Correlation table
+
+require(see)
+require(dplyr)
+require(easystats)
+
+results %>%
+  summary(redundant = TRUE) %>%
+  plot()
+
+
+#Main plots
+
+##############################################
+
+#Circular tree + BMR and Status
+
+tree1 <- tree[[453]]
+cols <- c("activity", "extant")
+data1 <- dataX15[c(cols)]   #all
+data1$BMR <- data_final$BMR
+data1$names <- rownames(data1) #add names col
+data3 <- data1[-c(1,3,4)]   #only status
+data1$Activity <- data1$activity
+
+levels(data1$extant) <- c('extinct', 'extant')
+levels(data3$extant) <- c('extinct', 'extant')
+data1$Activity <- factor(data1$activity, levels=c("Diu", "Cath/Cre", "Noc"))
+levels(data1$Activity) <- c("diurnal", "cathemeral/crepuscular", "nocturnal")
+
+circ <- ggtree(tree1, layout = "circular")
+
+p1 <- gheatmap(circ, data3, offset=0.1, width=.2,hjust = 0.2, colnames = FALSE,
+         colnames_angle=95, colnames_offset_y = 3) + scale_fill_manual(values=c("lavender","tomato3"), name="Status") +
+    theme(#legend.position=c(0.96, 0.5), # the position of legend.
+        legend.background=element_rect(fill=NA), # the background of legend.
+        legend.title=element_text(size=13), # the title size of legend.
+        legend.text=element_text(size=12), # the text size of legend.
+        legend.spacing.y = unit(0.05, "cm"),  # the distance of legends (y orientation).
+        legend.key.size = unit(0.35, "cm")
+    ) 
+
+p2 <- p1 + 
+    new_scale_fill() +
+    geom_fruit(
+        data=data1,
+        geom=geom_col,
+        mapping=aes(y=names, x=(log(BMR)-5), fill=Activity),
+        pwidth=0.6,
+        offset=0.33,
+        grid.params=list() # add the grid line of the external bar plot.
+    ) + 
+    scale_fill_manual(
+        values=c("#F5C710", "olivedrab3", "dodgerblue3"),
+        guide=guide_legend(keywidth=0.5, keyheight=0.5, order=6)
+    ) +
+    theme(#legend.position=c(0.96, 0.5), # the position of legend.
+        legend.background=element_rect(fill=NA), # the background of legend.
+        legend.title=element_text(size=13), # the title size of legend.
+        legend.text=element_text(size=12), # the text size of legend.
+        legend.spacing.y = unit(0.05, "cm"),  # the distance of legends (y orientation).
+        legend.key.size = unit(0.5, "cm")
+    ) 
+
+
+#Violin plots
+
+#remove missing conepatus and felis catus
+data_final1 <- data_final[-c(27,60),]
+data_final1$activity <- data_final$activity
+
+data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels = levels(addNA(data_final1$IUCN.status)), labels = c(levels(data_final1$IUCN.status), "Extinct"), exclude = NULL)
+data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
+p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=(log(BMR)-5), fill=IUCN.status)) +   
+      geom_violin(trim = FALSE, alpha = 0.9) + 
+      geom_boxplot(width = 0.1) +
+      theme(legend.position = "none",
+            axis.title.x=element_text(size=14,face="bold", margin=margin(20,0,0,0)),
+            axis.title.y=element_text(size=14,face="bold", margin=margin(0,20,0,0)),
+            panel.background = element_rect(fill = "white", colour = "grey50"),
+            axis.text = element_text(size=12)) +
+      #scale_fill_hue(labels = c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Exctinct")) 
+      scale_x_discrete(name ="IUCN Status", labels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct")) +
+      scale_y_continuous(name = expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)")) +
+      scale_fill_manual(values = c("dodgerblue1", '#008080', "forestgreen", "gold2", "brown2"))
+      
+
+p
+
+###########################
+#Ridge plot
+library(ggridges)
+require(dplyr)
+
+data_temp <- data.frame()
+
+data_temp <- as.data.frame(dataX15$activity)
+data_temp$Activity <- dataX15$activity
+data_temp$Status <- dataX15$extant
+data_temp$BMR <- dataX15$BMR
+data_temp$`dataX15$activity` <- NULL
+
+data_temp$Activity <- factor(data_temp$Activity, labels=c("Cathemeral/crepuscular", "Diurnal", "Nocturnal"))
+data_temp$Activity <- ordered(data_temp$Activity, levels = c("Diurnal", "Cathemeral/crepuscular", "Nocturnal"))
+data_temp$Status <- factor(data_temp$Status, labels=c("extinct","extant"))
+
+ggplot(data_temp) + 
+    geom_density_ridges(aes(x = BMR, y = Activity, group = interaction(Activity, Status),fill = Status), alpha = 0.7) +
+          theme(panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(), 
+                panel.background = element_blank(), 
+                axis.line = element_line(colour = "black"), 
+                axis.text = element_text(size=12, face="bold"), 
+                axis.title.x=element_text(size=14,face="bold", margin=margin(20,0,0,0)),
+                text = element_text(size = 14),
+                legend.spacing.y = unit(0.5, 'cm')) +
+  guides(fill = guide_legend(byrow = TRUE)) +
+  scale_x_continuous(name= expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)")) + 
+  scale_fill_manual(values=c("firebrick1", "blue3"))
+
+#steelblue
+#forestgreen
+
+#############################
+#Dotplot with p values
+
+#Load output1.phylo.tall as output
+
+p <-ggplot(output, aes(log2(No)+10, reorder(Variable, -No))) +
+    geom_point(aes(color = Run1, shape=Run1), size = 4.5, position = position_dodge(0.5)) +
+    #geom_line(aes(group = Variable)) +
+    scale_shape_manual(values=c(19, 19, 19, 1), guide = "none") +
+    scale_color_manual(labels = c('phylogenetic 1', 'phylogenetic 2', 'phylogenetic 3', 'non-phylogenetic'), 
+                       values=c('gold1','dodgerblue3', 'firebrick1', 'black')) +
+    theme(panel.grid.major.y = element_line(color = "black",
+                                        linewidth = 0.1,
+                                        linetype = "dotted"), 
+          panel.grid.minor = element_blank(), 
+          panel.background = element_blank(), 
+          axis.line = element_line(colour = "black"), 
+          axis.text.x = element_text(size=12), 
+          axis.text.y = element_text(size=12), 
+          axis.title=element_text(size=14,face="bold"),
+          legend.position="top") +
+  labs(color='Regression type:') +
+  xlab("p-value (log scale)") + 
+  ylab("Trait") +
+  #scale_x_continuous(limits = c(0, 0.9), breaks = scales::pretty_breaks(n = 20)) +
+  geom_vline(xintercept=5.686, linetype = "dotted") +
+  geom_vline(xintercept=0.034, linetype = "dotted") +
+  annotate("text", x=5.58, y=35, label="p<0.05", angle=90, size = 3.3, colour="dodgerblue3") +
+  annotate("text", x=-0.05 , y=35.2, label="p<0.001", angle=90, size = 3.3, colour="dodgerblue3") +
+  scale_x_continuous(breaks=c(0.034, 3.356, 5.68), labels=c("0.034" = "0.001", "3.356" ="0.01", "5.68" = ">0.05"))
+
+
+
+
+```
+
+#Functions
+##Lsolm
+```{r}
+lsolm<-function(formula,data,binomial=FALSE,summary=TRUE)	{
+	form <- formula(formula)
+	if (! missing(data))	{
+		y <- model.frame(form,data)[,1]
+		X <- as.matrix(model.frame(form,data)[,-1])
+	} else	{
+		y <- model.frame(form)[,1]
+		X <- as.matrix(model.frame(form)[,-1])
+	}
+	if (! is.matrix(X) || ncol(X) < 2)
+		stop('there must be at least two predictors')
+	if (binomial == FALSE)
+		y <- scale(y)
+	X <- scale(X)
+	s <- svd(t(X))
+	Z <- scale(t(s$u %*% t(s$v)))
+	colnames(Z) <- colnames(X)
+	if (summary == TRUE)	{
+		cat('\nRows and columns in matrix:',nrow(X),'and',ncol(X),'\n')
+		cat('Correlation between raw and rotated data matrices:',sprintf('%.4f',cor(as.vector(unlist(X)),as.vector(unlist(Z)))),'\n')
+	}
+	if (binomial == FALSE)	{
+		l <- lm(y ~ .,data=data.frame(Z))
+		cf <- summary(l)$coefficients
+		cf <- cbind(c(NA,diag(cor(X,Z))),cf[,1],cf[,1]^2,cf[,-1])
+		colnames(cf)[1:3] <- c('Cor. X','Beta coef.','Beta^2')
+	} else	{
+		l <- glm(y ~ .,data=data.frame(Z),family='binomial')
+		cf <- summary(l)$coefficients
+		cf <- cbind(c(NA,diag(cor(X,Z))),cf)
+		colnames(cf)[1] <- c('Cor. X',)
+	}
+	if (summary == TRUE)	{
+		cat('\nCoefficients:\n\n')
+		b2 <- sum(as.numeric(cf[,2]))
+		for (i in 1:ncol(cf))
+			cf[,i] <- sprintf('% #.6g',as.numeric(cf[,i]))
+		colnames(cf) <- paste0(' ',colnames(cf))
+		print(cf,quote=F)
+		if (binomial == FALSE)
+			cat('\nMultiple R-squared (sum of squared betas):',sprintf('%.4f',summary(l)$r.squared),'\n\n')
+		else
+			cat('\nPseudo-R-squared:',sprintf('%.4f',1 - l$deviance / l$null.deviance),'\n\n')
+	} else	{
+		return(list(coefficients = cf, residuals = l$residuals, fitted.values = l$fitted.values, rotated.matrix = Z))
+	}
+}
+```

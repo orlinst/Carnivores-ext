@@ -65,6 +65,7 @@ speciesE$abundance[a] <- a1[a] #transform Yeo–Johnson
 
 #do we need these?
 speciesE$diet.new <- NULL
+require(psych)
 
 multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
 
@@ -1410,7 +1411,8 @@ p2 <- p1 +
 data_final1 <- data_final[-c(27,60),]
 data_final1$activity <- data_final$activity
 
-data_final1$IUCN.status[is.na(data_final1$IUCN.status)] = "Extinct"
+#data_final1$IUCN.status[is.na(data_final1$IUCN.status)] = "Extinct"
+data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels = levels(addNA(data_final1$IUCN.status)), labels = c(levels(data_final1$IUCN.status), "Extinct"), exclude = NULL)
 data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
 p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=(log(BMR)-5), fill=IUCN.status)) +   
       geom_violin(trim = FALSE, alpha = 0.9) + 
@@ -1685,6 +1687,8 @@ require(mice)
 gg_miss_var(speciesE)
 vis_miss(speciesE)
 
+mcar_test(data_final)
+
 imp <- mice(data[,3:15], 20, maxit = 10)
 
 plot(imp)
@@ -1692,6 +1696,13 @@ densityplot(imp)
 stripplot(imp, pch = 20, cex = 1.2)
 
 complete(imp, 2)
+
+#PHYLOSIG
+
+d2 <- as.matrix(data_final$VAR)
+rownames(d2) <-data_final$species_name
+phylosig(tree,d2,method="lambda",test=TRUE)
+phylosig(tree,d2,method="K",test=TRUE)
 ```
 
 #Path

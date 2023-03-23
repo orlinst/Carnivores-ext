@@ -678,7 +678,5 @@ median(unlist(phylopmulti[32, ]), na.rm=TRUE)
 
 cbind(rowMedians(p[1:40,]), colnames(m))
 
-}}
-
 aaa <- sort(rowMedians(phylop))
 p.adjust holm
