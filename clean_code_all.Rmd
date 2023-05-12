@@ -569,7 +569,7 @@ lsolm<-function(formula,data,binomial=FALSE,summary=TRUE)	{
 		l <- glm(y ~ .,data=data.frame(Z),family='binomial')
 		cf <- summary(l)$coefficients
 		cf <- cbind(c(NA,diag(cor(X,Z))),cf)
-		colnames(cf)[1] <- c('Cor. X',)
+		colnames(cf)[1] <- c('Cor. X')
 	}
 	if (summary == TRUE)	{
 		cat('\nCoefficients:\n\n')

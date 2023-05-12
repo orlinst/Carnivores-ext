@@ -1,0 +1,851 @@
+---
+title: "Carnivores"
+output: html_document
+date: '2022-07-20'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Loading the data
+```{r}
+require(psych)
+
+speciesE <- read.delim("speciesE.txt", header=T)
+rownames(speciesE) <- speciesE$species_name
+
+
+#defining var class
+speciesE$extant <- as.factor(speciesE$extant)
+speciesE$loctype <- as.factor(speciesE$loctype)
+speciesE$diet.cat <- as.factor(speciesE$diet.cat)
+
+
+#remove NA level from diet
+#speciesE$diet.cat <- factor(speciesE$diet.cat, exclude="")
+speciesE$diet.new <- factor(speciesE$diet.new, exclude="")
+
+#Log vars
+require(VGAM)
+
+speciesE$simpson[23] <- NA
+speciesE$simpson[78] <- NA
+speciesE$simpson[80] <- NA
+
+speciesE$mass.g <- log(speciesE$mass.g)
+speciesE$home.range <- log(speciesE$home.range)
+speciesE$BMR <- log(speciesE$BMR)
+speciesE$simpson <- log(1/speciesE$simpson)
+
+
+yj <- function (y) {((y+1)^0.0001 - 1) / 0.0001}
+a <- (which(!is.na(speciesE$abundance)))
+a1 <- yj(which(!is.na(speciesE$abundance)))
+speciesE$abundance[a] <- a1[a] #transform Yeo–Johnson
+
+
+#do we need these?
+speciesE$mean.abundance <- NULL #should use median? - recode!
+
+
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+```
+
+##Marking extinct vs extant
+```{r}
+extinct_large_mammals <- read.delim("extinct_large_mammals.txt", header=F)
+extant_large_mammals <- read.delim("extant_large_mammals.txt", header=F)
+
+#check for missing species
+extant <- match(speciesE$species, extant_large_mammals$V1)
+extinct <- match(speciesE$species, extinct_large_mammals$V1)
+
+sum(names(table(speciesE$species)) %in% names(table(extinct_large_mammals)))  #count common species between ecoreg and Extinct list = 19
+sum(names(table(speciesE$species)) %in% names(table(extant_large_mammals)))   #count common species between ecoreg and Extant list = 95
+
+which(is.na(extant)&(is.na(extinct))) #check for double NAs
+check <- cbind (extant, extinct) #check for double NAs
+
+#match extant species in the dataset and mark them with 0 = extinct and 1 = extant
+
+m <- match(speciesE$species, extant_large_mammals$V1)
+speciesE$extant <- m
+speciesE$extant[!is.na(speciesE$extant)] <- 1
+speciesE$extant[is.na(speciesE$extant)] <- 0
+```
+
+
+##Add data from other datasets
+```{r}
+
+#HELBSTAB
+#-------------------------------------
+  
+
+#Split the genus from family
+speciesH <- array()
+s <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')
+
+  for (i in 1:nrow (X_helbstab_journal_pone_0261185_s005)) {
+  speciesH[i] = paste(s[[i]][1], s[[i]][2])
+ }
+
+#X_helbstab_journal_pone_0261185_s005$species1 <- strsplit(X_helbstab_journal_pone_0261185_s005$`Species name`,'_')[[1]][1]
+
+#Count the common species with Heldstab
+sum(names(table(speciesH)) %in% names(table(species$V1)))
+
+
+#get the brains
+m1 <- match(speciesE$species, speciesH)
+speciesE$brain <- X_helbstab_journal_pone_0261185_s005$`Log ECV`[m1]
+speciesE$EQ <- X_helbstab_journal_pone_0261185_s005$`Encephalization quotient (EQ)`[m1]
+
+#write to main data set
+write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+
+
+#NOONAN PC and Litter Size
+#-----------------------------------
+
+noonan_tables1 <- as.data.frame(noonan_tables1)
+data <- noonan_tables1[, 5:15] #activity vars
+rownames(data) <- paste(noonan_tables1[,'Genus'], noonan_tables1[,'Species'])
+pc <- princomp(na.omit(data))
+pc_noonan <- pc$scores[,1]
+names(pc_noonan) <- rownames(pc$scores)
+w <- match(speciesE$species, names(pc_noonan))
+speciesE$pc <- pc_noonan[w]
+
+#Also add litter size
+#speciesE <- speciesE2[1:114,]
+
+
+#BEN BMR
+#--------------------------------------
+
+#Adding BMR (from two diff columns same df)
+
+w <- match(speciesE$species, All_Carnivore_Species_BMRs$species_name) #match names
+w1 <- match(speciesE$species, All_Carnivore_Species_BMRs$synonym) #match synonyms
+speciesE$BMR <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w]
+speciesE$BMR1 <- All_Carnivore_Species_BMRs$BMR_ml_O2_h[w1]
+speciesE$BMR[is.na(speciesE$BMR)] = data$BMR1[!is.na(speciesE$BMR1)]
+
+```
+
+##Diet re-cat
+```{r}
+
+#pure carn
+#invert carn
+#frug carn
+#frug invert
+#browser primary
+
+speciesE1 <- speciesE
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "carnivore") & (speciesE$diet.2 == ""), "carnivore","")
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "invertivore") & (speciesE$diet.2 == ""), "invertivore",speciesE1$diet.new)
+#speciesE1$diet.new <- ifelse((speciesE$diet.1 == "browser") & (speciesE$diet.2 == ""), "browser",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "browser"), "browser",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "frugivore") & (speciesE$diet.2 == ""), "frugivore",speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE$diet.1 == "piscivore"), "piscivore",speciesE1$diet.new)
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "invertivore") & (speciesE1$diet.2 == "carnivore"), "carninvert", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "invertivore"), "carninvert", speciesE1$diet.new)
+
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "frugivore"), "carnifrug", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "carnivore") & (speciesE1$diet.2 == "granivore"), "carnifrug", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "invertivore") & (speciesE1$diet.2 == "frugivore"), "invertivore", speciesE1$diet.new)
+
+
+
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "frugivore") & (speciesE1$diet.2 == "carnivore"), "frugcarn", speciesE1$diet.new)
+speciesE1$diet.new <- ifelse((speciesE1$diet.1 == "frugivore") & (speciesE1$diet.2 == "invertivore"), "frugivore", speciesE1$diet.new)
+
+speciesE$diet.new <- speciesE1$diet.new
+
+
+```
+
+
+#Wrangle, explore and investigate
+```{r}
+require(easystats)
+require(psych)
+describe_distribution(speciesE)
+multi.hist(speciesE[,sapply(speciesE, is.numeric)], global = F) 
+
+
+
+data_filter(speciesE, extant == 0 & is.na(diet.new)) #need to get the factors back with NA level to count it
+
+
+require(lattice)
+dotplot(factor(speciesE$extant) ~ log(speciesE$mass.g))
+```
+
+
+#Misingness (and imputation)
+```{r}
+require(naniar)
+require(mice)
+
+
+gg_miss_var(speciesE)
+vis_miss(speciesE)
+
+imp <- mice(data[,3:16], 20, maxit = 10)
+
+plot(imp)
+densityplot(imp)
+stripplot(imp, pch = 20, cex = 1.2)
+
+complete(imp, 2)
+```
+
+#Tree wrangle
+```{r}
+require(phytools)
+require(BAMMtools)
+
+
+treeF <- read.tree("Complete_phylogeny.nex")
+rownames(speciesE) <- speciesE$species_
+
+#Adding the 3 missing species (length = 0.5 on the branch - except for Conepatus = 0 from the mrca)
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) 
+
+
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_chinga"
+sister2 <- "Conepatus_leuconotus" 
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=getmrca(tree[[i]], sister, sister2),
+    position=0*tree[[i]]$edge.length[getmrca(tree[[i]], sister, sister2)])) 
+
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+
+tree[i] <- c(bind.tip(tree[[i]],tip,where=which(tree[[i]]$tip.label==sister),
+    position=0.5*tree[[i]]$edge.length[which(tree[[i]]$edge[,2]==
+    which(tree[[i]]$tip.label==sister))])) }
+
+
+grep("Martes", tree[[7]]$tip.label, value = TRUE)
+
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[1]] #we can use all of the trees in mcmcglmm
+data1 <- clean$data
+
+```
+
+
+###*bad solution
+```{r}
+#adding missing species loop (bad solution with tree extraction!)
+
+#extract all trees
+treeNew <- list()
+class(treeNew) <- "multiPhylo"
+
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), tree[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Martes_caurina"
+sister <- "Martes_americana"
+
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+    
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+
+for (i in 1:length(tree))	{
+tip <- "Felis_lybica"
+sister <- "Felis_silvestris"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+for(ntrees in 1:length(tree)) {
+    assign(paste0("treeX", ntrees), treeNew[[ntrees]])
+}
+
+for (i in 1:length(tree))	{
+tip <- "Conepatus_robustus"
+sister <- "Conepatus_leuconotus"
+treeNew[i] <- c(bind.tip(get(paste0("treeX",i)),tip,where=which((get(paste0("treeX",i)))$tip.label==sister),
+    position=0.5*(get(paste0("treeX",i)))$edge.length[which((get(paste0("treeX",i)))$edge[,2]==
+    which((get(paste0("treeX",i)))$tip.label==sister))])) }
+
+
+rm(list=ls(pattern="treeX"))
+```
+
+
+#Load final tree and data
+```{r}
+require(phytools)
+require(mulTree)
+tree <- read.tree("CompletePhyCarn.txt")
+
+clean <- clean.data(speciesE, tree)
+tree1 <- clean$tree[[2]]
+data <- clean$data
+
+```
+
+#Analyses - gls;phyloglm;rstanarm
+```{r}
+
+require(phylolm)
+require(rstanarm)
+
+
+#Non-phylo gls
+a <- glm(speciesE$extant ~ speciesE$diet.1, family = binomial)
+summary(a)
+
+#RELEVEL for ancova relevel(diet.1, ref = "carnivore")
+
+#timetree phy
+tree2 <- read.newick("spcs.nwk")
+clean.data(speciesE, tree)
+
+
+aa <- phyloglm(extant ~ log(mass.g) + loctype, speciesE, tree) #scansorial+
+aa <- phyloglm(extant ~ median.abundance + loctype, speciesE, tree) #terrestrial-
+aa <- phyloglm(extant ~ diet.1, speciesE, tree) #carnivore+
+aa <- phyloglm(extant ~ median.abundance + log(mass.g) + loctype, speciesE, tree) #median abd+, mass-
+
+#phylacine phy
+#treeF <- read.nexus("Complete_phylogeny.nex")
+#rownames(speciesE) <- speciesE$species_
+#clean <- clean.data(speciesE, treeF)
+#tree1 <- clean$tree[1]$UNTITLED #we can use all of the trees in mcmcglmm
+#data1 <- clean$data
+
+#check the diet var!
+#data1$diet.new <- as.factor(data1$diet.new)
+#data1$diet.new <- factor(data1$diet.new, exclude="")
+
+#USE THE MULTI.REGRESS
+
+phyloglm(extant ~ log(BMR) + diet.1, data1, tree1, method = c("logistic_MPLE"), btol = 100, boot=10) # also only diet
+phyloglm(extant ~ median.abundance + log(mass.g) + loctype, data1, tree1, method = c("logistic_MPLE"), btol = 30, boot = 100) # mass?
+
+#rstanarm
+
+fit_rstanarm <- stan_glm(
+    extant ~ loctype,
+    data = speciesE,
+    family = "binomial"
+)
+
+summary (fit_rstanarm)
+```
+
+##Functions
+```{r}
+
+print.pval <- function(x, digits = 6) {
+    sig_level <- cut(x,
+                     breaks = c(-Inf, 0, 0.0001, 0.001, 0.01, 0.05, Inf),
+                     labels = c("", "****", "***", "**", "*", ""))
+    print(paste0(signif(x, digits = digits), sig_level), quote = FALSE)
+    invisible(x)
+}
+
+#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
+regress.multi <- function (multree, data, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
+    a = 0 #counter for sig models
+# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+# (see print.pval fun) and prints them - progress is displayed
+for (i in from:to){
+    temptree <- multree[[i]]
+    s1 <- phyloglm(model, data, temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
+    asd <- as.numeric(s2[[1]])
+      if(any(asd[-1]<alpha)){
+        print.pval(asd[-1]) 
+        a = a+1
+        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+        }
+        #print(summary(s1)$coefficients[,4])
+        print (summary(s1))
+                  }
+    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
+    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
+    }
+
+require(phylolm)
+
+regress.multi(tree, complete(imp, 2), extant ~ diet.cat, 1, 12)
+
+
+
+#Run phyloglm on multiple trees (with boot need to statrt from tree 2?!?)
+regress.multi.impute <- function (multree, sets, model, from=1, to=length(tree), alpha=0.05, btol.v=10, boot.v=0) {
+    a = 0 #counter for sig models
+    b = 0
+    z = matrix(ncol = 18, nrow =sets*(to-from+1))
+    #z <- NULL
+    #z <- data.frame(matrix(ncol = 10, nrow = 10))
+# gets the trees one by one, extracts the coeffs from the summary (as numeric), marks the sig p values 
+# (see print.pval fun) and prints them - progress is displayed
+for (i in from:to){
+for (imps in 1:sets){
+    temptree <- multree[[i]]
+    
+    s1 <- phyloglm(model, complete(imp, imps), temptree, method = c("logistic_MPLE"), btol = btol.v, boot=boot.v)
+    b = b + 1
+    k = summary(s1)$coefficients[,3]
+    print(k)
+    #print(length(k))
+    z[b , 1 : length(k)] = k
+    s2 <- as.data.frame(summary(s1)$coefficients[,"p.value"]) 
+    asd <- as.numeric(s2[[1]])
+      if(any(asd[-1]<alpha)){
+        print.pval(asd[-1]) 
+        a = a+1
+        cat(asd,"\n", " N Sig models:", a, " out of", i-from+1, "", round((a/(to-from))*100, 2), "% " ,"\n")
+      }
+   
+        #print(summary(s1)$coefficients[,4])
+        #print (summary(s1))
+        #print(z)
+                  }}
+    cat(paste0("\n Predictors: (", length(row.names(s2)[-1]),")" ))
+    cat(paste0("\n", " ", row.names(s2)[-1]), "\n")
+    cat(paste0("\n ==================== \n", " Total models: ", to - from + 1, "x", sets, "\n Significant: ", a, "\n ", "p<", alpha," ", round((a/(to-from+1))*100, 2), "% ", "\n ==================== \n"))
+    print(list(colMeans(z, na.rm=T)))
+    asd1 <<- capture.output(colMeans(z, na.rm=T))
+    #asd12 <- capture.output(cbind(row.names(s2),asd1))
+    }
+regress.multi.impute(tree, 20, extant ~ mass.g + home.range + loctype + pc + diet.cat + litter, 150, 200)
+
+pt(asd1, species - vardfs)
+
+```
+
+```{r}
+data.pc <- data[,3:16]
+rownames(data.pc) <- data$species
+
+
+PC1 <- list()
+PC2 <- list()
+PC3 <- list()
+
+for (i in 1:20) {     #number of imputed sets
+      
+  a <- princomp(complete(imp, i)[, -c(3, 6, 10, 11)]) # only continuous vars 
+  PC1 <- cbind(PC1, loadings(a)[,1])
+  PC1 <- sapply(PC1, as.numeric)  
+  PC1 <- as.data.frame(PC1)
+  PC1$mean <- rowMeans(PC1)
+  
+  PC2 <- cbind(PC2, loadings(a)[,2])
+  PC2 <- sapply(PC2, as.numeric)  
+  PC2 <- as.data.frame(PC2)
+  PC2$mean <- rowMeans(PC2)
+  
+  PC3 <- cbind(PC3, loadings(a)[,3])
+  PC3 <- sapply(PC3, as.numeric)  
+  PC3 <- as.data.frame(PC3)
+  PC3$mean <- rowMeans(PC3)
+  
+PC.loadings.means <- data.frame(PC1$mean, PC2$mean, PC3$mean)
+
+names <- data.frame(names(loadings(a)[,1]))
+row.names(PC.loadings.means) <- names[,1]
+PC.loadings.means 
+  }
+```
+
+#Plots
+```{r}
+
+#clean <- clean.data(data, tree1)
+#tree1 <- clean$tree
+#data <- clean$data1
+
+
+#choose cols to plot
+colnames(data)
+
+#Get them by number
+#nameCol <- data.frame(colnames(data))
+#cols <- nameCol[c(4,6,8),]
+
+#Get them by name
+cols <- c("loctype","diet.new", "extant")
+
+#Fetch only the desired columns in a new df and give it row names
+data1 <- data[c(cols)]
+
+#convert vars to what they need to be - factor, numeric etc (if need be) (factors with NA level)
+data1[cols] <- lapply(data1[cols], factor, exclude="")
+
+#check if it worked
+levels(data1[,1])
+sapply(data1, class)
+
+#get 1 tree
+tree1 <- tree[[2]]
+
+require(ggtree)
+require(ggplot2)
+require(wesanderson)
+
+pal <- wes_palette("Darjeeling1", 1110, type = "continuous")
+
+
+#tree1 <- drop.tip(tree1, "Felis_catus")
+
+
+#Circular tree with traits from data1
+circ <- ggtree(tree1, layout = "circular")
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
+
+#Visualise traits per cat
+p2 <- ggplot(data1, aes(x=extant, y=tree1$tip.label, width=.5)) + 
+    geom_tile(aes(fill=`extant`)) + scale_fill_viridis_d() + 
+    theme_minimal() + xlab(NULL) + ylab(NULL)
+
+#+ geom_tippoint(aes(color = c("a", "b")))
+
+#circ tree with offset
+circ <- ggtree(tree1, layout = "circular") + geom_tiplab(offset=15)
+p1 <- gheatmap(circ, data1, offset=.8, width=.2,
+               colnames_angle=95, colnames_offset_y = .25) + scale_fill_viridis_d(option="D", name="discrete\nvalue")
+
+#Tree with offset
+g <- ggtree(tree1) + geom_tiplab(align=TRUE, offset=15) + hexpand(.5)
+
+#Plot the heatmap
+p5 <- gheatmap(g, data[cols], offset=.8, width=.2,colnames_angle=95, colnames_offset_y = .25, colnames_position = "top")
+
+
+#grep("robustus", b, value = TRUE)
+
+
+#heatmap using ggtree
+
+p11 <- ggtree(tree[[1]]) + 
+    xlim(0, 150) +
+    geom_tiplab(size=4, offset = 35)
+
+p21 <-  gheatmap (p11, data[,c("diet.1", "diet.cat", "diet.new")], offset=-0.5, width=0.5, low=(values=pal[1]), high=(values=pal[2]), colnames_position = "top", font.size=4) + scale_fill_manual(values = pal)
+
+#phylo.heatmap(tree,X,standardize=TRUE)
+
+
+library(aplot)
+p21 %>% insert_left(p5) %>% insert_right(p1, width=.5) 
+
+
+
+
+library(ggridges)
+ggplot(speciesE, aes(x = brain, y = extant, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C")
+
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient() +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+ggplot(speciesE, aes(x = litter, y = loctype, fill = stat(x))) +
+    geom_density_ridges_gradient(stat="binline") +
+    scale_fill_viridis_c(name = "Depth", option = "C") +
+    coord_cartesian(clip = "off") + # To avoid cut off
+    theme_minimal()
+
+
+speciesE %>%
+     mutate(diet.cat = factor(diet.cat)) %>%
+     ggplot() +
+     geom_boxplot(aes(x = diet.cat, y = log(mass.g)))
+
+ggplot(speciesE) + 
+    geom_density_ridges(aes(x = log(mass.g), y = diet.cat, group = interaction(diet.cat, extant),fill = extant), alpha = 0.7)
+
+```
+
+
+#SCAT
+```{r}
+s2 = read.delim('all_scats.txt')
+s2[is.na(s2)] = 0
+s2 = s2[,33:54]
+s2 = t(t(s2) / colSums(s2))
+
+s = read.delim('all_scats.txt')
+sp = paste(s[,29],s[,30])
+s = s[,33:54]
+s[is.na(s)] = 0
+s = s / rowSums(s)
+
+d = matrix(nrow=nrow(s),ncol=6,dimnames=list(sp,c('vert','invert','frug','plant','aquatic','fungus')))
+
+d[,1] = rowSums(s[,1:4])
+d[,2] = rowSums(s[,7:12])
+d[,3] = rowSums(s[,14:17])
+d[,4] = rowSums(s[,18:20])
+d[,5] = rowSums(s[,c(5,6,13)])
+d[,6] = rowSums(s[,21:22])
+
+plot(hclust(dist(d)),labels=sp,cex=0.5)
+
+k = kmeans(d,centers=5)$clust
+
+sort(k)
+
+v = array()
+
+for (i in 1:20)	{
+	v[i] = (kmeans(d,centers=i)$tot.withinss / kmeans(d,centers=i)$totss)
+}
+
+plot(v,type='l')
+
+
+barplot(t(d[order(k),]),col=hsv(h=0:5 / 6))
+
+
+#add to main datatset
+dc.match <- match(speciesE$species, names(k))
+speciesE$diet.cat <- k1$k[dc.match]
+
+
+#ed = vert, yellow = invert, green = frug, cyan = plant, blue = aquatic, ? = fungus
+
+
+#Indeces
+require(vegan)
+
+s2 = read.delim('all_scats.txt')
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+
+
+#semi-manual with vegan (skip)
+for (i in 1:length(scat$species))	{
+    assign(paste0("n",i), as.numeric(scat[i,1:22]))
+}
+
+for (i in 1:length(scat$species))	{
+     scat$shannon[i] <- diversity(get(paste0("n",i)), index = "shannon")
+}
+
+for (i in 1:length(scat$species))	{
+     scat$simpson[i] <- diversity(get(paste0("n",i)), index = "simpson")
+}
+
+rm(list=ls(pattern="n"))
+
+
+#OR EASIER
+
+s2 = read.delim('all_scats.txt')
+scat = s2[,33:54]
+scat[is.na(scat)] = 0
+scat$species <- paste(s2[,'genus'], s2[,'species'])
+scat.species <- aggregate(. ~ species, data=scat, FUN=mean)
+rownames(scat.species) <- scat.species$species
+scat.species$species <- NULL
+scat.species[,1:22] <- sapply(scat.species[,1:22],as.integer)
+
+sapply(scat.species, class)
+#scat.species <- as.data.frame(scat.species)
+
+scat.species$shannon <- diversity(scat.species, index="shannon") #calculate the indeces ONE BY ONE!
+scat.species$simpson <- rarefy(scat.species, 2) - 1 #unbiased simpson
+
+#scat.species$simpson <- diversity(scat.species, index="simpson")   #RAREFY! ,2) -1 (log)!!!!
+ 
+scat.match <- match(speciesE$species, row.names(scat.species))
+speciesE$shannon <- scat.species$shannon[scat.match]
+speciesE$simpson <- scat.species$simpson[scat.match]
+
+#s2 = read.delim('all_scats.txt')
+#scat = s2[,33:54]
+#scat[is.na(scat)] = 0
+#scat$species <- paste(s2[,'genus'], s2[,'species'])
+
+#Using SYNCSA for Rao's QE
+require(SYNCSA)
+scat.species$shannon <- NULL
+scat.species$simpson <- NULL
+rownames(scat.species) <- scat.species$species
+scat.species$species <- NULL
+r1 <- rao.diversity(scat.species)
+scat.match <- match(speciesE$species, rownames(scat.species))
+speciesE$raoS <- r1$Simpson[scat.match]
+
+
+write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+
+
+
+#scat$sums <- rowSums(scat[1:22])
+
+
+#We only have diet on 2 extinct species: Martes caurina AND Felis lybica
+
+
+#-----------------------------
+#manual calc
+
+#n = pop
+#N = sum(row)
+
+for (i in 1:length(s2$species))	{
+    assign(paste0("n",i), as.numeric(scat[i,1:22]))
+}
+
+N = rowSums(scat[1:22])
+
+
+#p = n/N
+for (i in 1:length(s2$species))	{
+    assign(paste0("p",i),  get(paste0("n",i))/N[i])
+}
+  
+
+for (i in 1:length(s2$species))	{
+    scat$shannon[i,] <- diversity(get(paste0("n",i)))
+}
+
+H = -sum(p*log(p))  
+
+rm(list=ls(pattern="n"))
+
+#------------------------------------
+
+```
+
+
+
+###############3
+
+
+species -> register
+register <- sample
+registerX$species_full <- trimws(registerX$species_full, which = c("right"))
+
+
+rnum <- array(dim=245, dimnames = list(as.character(nos)), data = 1:245) 
+
+
+
+for (i in nos){
+    w = which(registerX[,'sample.no'] == i)
+    samplesX[rnum[as.character(i)], "countT"] = sum(registerX[w, 'count'])
+}
+
+
+
+
+
+
+change 0s to 0.00001s
+primatedata[which(primatedata[,14]==0, arr.ind=TRUE), 14] <- 0.00001
+
+
+put the new values in a dataframe
+
+df <- data.frame(x,y,z)
+
+
+
+Nowhere to run nowhere to hide! :D
+
+
+#Camera trap abundance calc
+```{r}
+
+#Pop density approximated
+
+#load up camera trap data
+register$name <- paste(register[,'genus'], register[,'species'])
+register_clean <- register[,c("name", "count", "count.per.day", "sample.no")]
+register_clean$ratio <- round(register_clean$count/register_clean$count.per.day)
+reg.species <- aggregate(. ~ name, data=register_clean, FUN=sum)
+species.number <- as.data.frame(table(register_clean$name))
+sp.match <- match(reg.species$name, species.number$Var1)
+reg.species$number <- species.number$Freq[sp.match]
+reg.species$rate <- (reg.species$count - reg.species$number) / reg.species$ratio
+
+
+reg.match <- match(speciesE$species, reg.species$name)
+speciesE$abundance <- reg.species$rate[reg.match]
+speciesE$median.abundance <- NULL
+write.table(speciesE, "speciesE.txt", sep = "\t", row.names = FALSE)
+
+
+
+register_sample_co <- register_clean[,c(2:4)]
+register_sample_co <- register_sample_co$count/register_sample_co$count.per.day
+
+register_sample_co <- aggregate(. ~ sample.no, data=register_sample_co, FUN=sum)
+sample.match <- match(register_sample_co$sample.no, register_clean$sample.no)
+register_clean$total <- register_sample_co$count[sample.match]
+register_clean$sample.no <- NULL
+
+register_clean$density <- round(register_clean$count/register_clean$count.per.day)
+
+```
+
+
+
+
+
+
+
+
+```{r}
+library(phylopath)
+
+models <- define_model_set(
+    one   = c(mass.g ~ extant, brain ~ extant),
+    two = c(extant ~ mass.g, brain ~ mass.g),
+    #three   = c(extant ~ brain, brain ~ mass.g),
+    #four = c(extant ~ mass.g + brain),
+    five = c(extant ~ mass.g, extant ~ brain))
+
+plot_model_set(models)
+
+
+result <- phylo_path(models, data = data1, tree = tree[[1]], model = 'lambda', method = "logistic_MPLE")
+s <- summary(result)
+plot(s)
+best_model <- best(result)
+plot(best_model)
+average_model <- average(result)
+plot(average_model, algorithm = 'mds', curvature = 0.1)
+```
