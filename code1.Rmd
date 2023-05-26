@@ -618,7 +618,7 @@ rm(list=ls(pattern="treeX"))
 require(phytools)
 require(mulTree)
 
-tree <- read.nexus("CompletePhyCarn.nex")
+tree <- read.tree("CompletePhyCarn.nex")
 data_final <- read.delim("carn-ext.txt", header=T)
 rownames(data_final) <- data_final$species_name
 
@@ -629,12 +629,11 @@ data_final$activity <- as.factor(data_final$activity)
 #data_final$soc.complexity <- as.factor(data_final$soc.complexity)
 
 
-data_final$afrotropic <- as.factor(data_final$afrotropic)
-data_final$australasia <- as.factor(data_final$australasia)
-data_final$indomalaya <- as.factor(data_final$indomalaya)
-data_final$neotropic <- as.factor(data_final$neotropic)
-data_final$nearctic <- as.factor(data_final$nearctic)
-data_final$palearctic <- as.factor(data_final$palearctic)
+data_final$Afrotropic <- as.factor(data_final$Afrotropic)
+data_final$Indomalaya <- as.factor(data_final$Indomalaya)
+data_final$Neotropic <- as.factor(data_final$Neotropic)
+data_final$Nearctic <- as.factor(data_final$Nearctic)
+data_final$Palearctic <- as.factor(data_final$Palearctic)
 
 
 clean <- clean.data(data_final, tree)

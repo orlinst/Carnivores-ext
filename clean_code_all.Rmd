@@ -13,6 +13,8 @@ knitr::opts_chunk$set(eval = FALSE)
 
 #Data preparation
 
+data_final <- read.delim("D:/Dropbox/05. Github/Sydney/Analyses/carn-ext.txt")
+
 ##Diet categories from scat
 ```{r}
 
@@ -134,7 +136,7 @@ require(BAMMtools)
 require(mulTree)
 
 
-tree <- read.tree("Complete_phylogeny.nex") #load all 1000 trees
+tree <- read.nexus("Complete_phylogeny.nex") #load all 1000 trees from PHYLACINE
 rownames(data_final) <- data_final$species_name
 
 #clean the species not in the dataset
@@ -189,10 +191,11 @@ tree[i] <- c(bind.tip(tree[[i]],tipd,where=which(tree[[i]]$tip.label==sisterd),
 ```{r}
 #Impute data
 require(mice)
+require(naniar)
 
 #Before imputation, transform/scale and select the var type - #defining var class, #log and scale, #Yeo Johnson transform of abundance from 'Load up data" section
 
-imp <- mice(data_final, 20, maxit = 100, method = c("", "", "logreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch","midastouch", "logreg", "logreg","logreg","logreg","logreg"))
+imp <- mice(data_final, 20, maxit = 100, method = c("", "", "logreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "polyreg", "polyreg", "midastouch", "midastouch", "midastouch", "midastouch", "midastouch","midastouch", "logreg", "logreg","logreg","logreg","logreg", "midastouch"))
 
 
 save(imp, file = "imp20x100.RData")
@@ -294,7 +297,7 @@ for(imputedsets in 1: length(imp$imp[[1]])) {
 require(matrixStats)
 require(phylolm)
 
-d2 = data.matrix(dataX1[,c(5:10,13,14,17:27)]) #select abd break down categorical variables
+d2 = data.matrix(dataX1[,c(5:10,13,14,17:28)]) #select and break down categorical variables
 p = matrix(NA,ncol(d2)+31,20) #create dummy matrix
 s = matrix(NA,ncol(d2)+31,20) #create dummy matrix
 d = list()
@@ -304,24 +307,24 @@ g = sample(1:1000, 100, replace=F) #choose 100 trees at random from 1000
 phylop=array(dim=c(ncol(d2)+31,20, 1000)) #store p values
 phylopmulti = matrix(NA,1000,1000)        #store p values from phylo regression
 
-for (j in 1:20) {                         #20 = number of datasets
+for (j in 1:20) {                         #20 = number of datasets, 134 = numbher of species
     n = data.matrix(get(paste0("dataX", j))[,c(11)])
-    loctype <- table(1:128, n)
-    m1 = matrix(unlist(loctype), nrow(loctype), ncol(loctype), dimnames=list(1:128, colnames(loctype)))
+    loctype <- table(1:134, n)
+    m1 = matrix(unlist(loctype), nrow(loctype), ncol(loctype), dimnames=list(1:134, colnames(loctype)))
     
     n = data.matrix(get(paste0("dataX", j))[,c(12)])
-    diet.cat <- table(1:128, n)
-    m2 = matrix(unlist(diet.cat), nrow(diet.cat), ncol(diet.cat), dimnames=list(1:128, colnames(diet.cat)))
+    diet.cat <- table(1:134, n)
+    m2 = matrix(unlist(diet.cat), nrow(diet.cat), ncol(diet.cat), dimnames=list(1:134, colnames(diet.cat)))
     
     n = data.matrix(get(paste0("dataX", j))[,c(15)])
-    activity <- table(1:128, n)
-    m3 = matrix(unlist(activity), nrow(activity), ncol(activity), dimnames=list(1:128, colnames(activity)))
+    activity <- table(1:134, n)
+    m3 = matrix(unlist(activity), nrow(activity), ncol(activity), dimnames=list(1:134, colnames(activity)))
     
     n = data.matrix(get(paste0("dataX", j))[,c(16)])
-    soc <- table(1:128, n)
-    m4 = matrix(unlist(soc), nrow(soc), ncol(soc), dimnames=list(1:128, colnames(soc)))
+    soc <- table(1:134, n)
+    m4 = matrix(unlist(soc), nrow(soc), ncol(soc), dimnames=list(1:134, colnames(soc)))
     
-    d[[j]] = data.matrix(get(paste0("dataX", j))[,c(5:10,13,14,17:27)])
+    d[[j]] = data.matrix(get(paste0("dataX", j))[,c(5:10,13,14,17:28)])
     tempx = cbind(d[[j]], m1, m2, m3, m4)
     d0 = data.matrix(dataX1)
     m = lsolm(d0[,3] ~ ., data = data.frame(tempx),summary=F)$rotated.matrix
@@ -329,17 +332,18 @@ for (j in 1:20) {                         #20 = number of datasets
     cat(colnames(d)[i],'\n')
   #for (i in 1:ncol(m)) {
     #add var numbers
-  for (i in 1:40) {                     #40 = the number of variables after breaking down categorical vars
-     
+  for (i in 1:41) {                     #42 = the number of variables after breaking down categorical vars
+    
     p[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,4]
     s[i,j] <- summary(glm(as.factor(d0[,3]) ~ m[,i],family='binomial'))$coefficients[2,1]
     stdevs <- which(rowSds(t(m))!=0)
     w = as.array(m[,i])
     dimnames(w) <- list(data_final$species_name)
   
-    temp = cbind(m[,i], as.integer(data_final$extant)) #)-1)
+    temp = cbind(m[,i], as.integer(data_final$extant) -1)
     colnames(temp) = c("whateva", "extant")
     rownames(temp) = rownames(m)
+    
   for (t in g) { 
     phylop[i,j,t] <- summary(phyloglm(extant ~ ., data = data.frame(temp), btol = 30, method="logistic_IG10", phy = tree[[t]]))$coefficients[2,"p.value"]
   }
@@ -348,7 +352,7 @@ for (j in 1:20) {                         #20 = number of datasets
 
 #Pool medians
 medians <- array()
-for(i in 1:40) {
+for(i in 1:41) {
 medians[i] <- median(phylop[i,,], na.rm = T)
 }
 
@@ -356,9 +360,13 @@ options("scipen"=100, "digits"=4)
 phylopmulti[32, ]
 median(unlist(phylopmulti[32, ]), na.rm=TRUE)
 
-cbind(rowMedians(p[1:40,]), colnames(m))
+aaa <- cbind(rowMedians(p[1:41,]), colnames(m)) #non phylo output
+write.csv(aaa, "non-phylo-output.csv") 
+medians <- cbind(medians, colnames(m))
+write.csv(medians, "phylo-output.csv") #phylo otput
 
-aaa <- sort(rowMedians(phylop))
+write.csv(rowMedians(s), "rows.csv") #non phylo slopes
+sort(rowMedians(phylop))
 
 # use p.adjust Holm
 
@@ -393,11 +401,16 @@ results %>%
 ##############################################
 
 #Circular tree + BMR and Status
+require(ggtree)
+require(ggplot2)
+require(ggnewscale)
+require(ggtreeExtra)
+
 
 tree1 <- tree[[453]]
 cols <- c("activity", "extant")
 data1 <- dataX15[c(cols)]   #all
-data1$BMR <- data_final$BMR
+data1$BMR <- dataX15$BMR
 data1$names <- rownames(data1) #add names col
 data3 <- data1[-c(1,3,4)]   #only status
 data1$Activity <- data1$activity
@@ -424,7 +437,7 @@ p2 <- p1 +
     geom_fruit(
         data=data1,
         geom=geom_col,
-        mapping=aes(y=names, x=(log(BMR)-5), fill=Activity),
+        mapping=aes(y=names, x=(BMR+2), fill=Activity),
         pwidth=0.6,
         offset=0.33,
         grid.params=list() # add the grid line of the external bar plot.
@@ -445,12 +458,12 @@ p2 <- p1 +
 #Violin plots
 
 #remove missing conepatus and felis catus
-data_final1 <- data_final[-c(27,60),]
-data_final1$activity <- data_final$activity
+#data_final1 <- dataX15[-c(27,60),]
+data_final1$activity <- dataX15$activity
 
 data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels = levels(addNA(data_final1$IUCN.status)), labels = c(levels(data_final1$IUCN.status), "Extinct"), exclude = NULL)
 data_final1$IUCN.status <- factor(data_final1$IUCN.status, levels=c("Least Concern", "Near Threatened", "Vulnerable", "Endangered", "Extinct"))
-p <- ggplot(data_final1[-c(27,60),], aes(x=IUCN.status, y=(log(BMR)-5), fill=IUCN.status)) +   
+p <- ggplot(data_final1, aes(x=IUCN.status, y=(BMR+2), fill=IUCN.status)) +   
       geom_violin(trim = FALSE, alpha = 0.9) + 
       geom_boxplot(width = 0.1) +
       theme(legend.position = "none",
@@ -495,7 +508,7 @@ ggplot(data_temp) +
                 legend.spacing.y = unit(0.5, 'cm')) +
   guides(fill = guide_legend(byrow = TRUE)) +
   scale_x_continuous(name= expression("Ln Basal metabolic rate (ml O" [" 2"] ~ "/h)")) + 
-  scale_fill_manual(values=c("firebrick1", "blue3"))
+  scale_fill_manual(values=c("tomato3", "lavender"))
 
 #steelblue
 #forestgreen
@@ -503,7 +516,7 @@ ggplot(data_temp) +
 #############################
 #Dotplot with p values
 
-#Load output1.phylo.tall as output
+output <- output1.phylo.tall #Load output1.phylo.tall as output
 
 p <-ggplot(output, aes(log2(No)+10, reorder(Variable, -No))) +
     geom_point(aes(color = Run1, shape=Run1), size = 4.5, position = position_dodge(0.5)) +
