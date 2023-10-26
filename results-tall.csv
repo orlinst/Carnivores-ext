@@ -1,0 +1,173 @@
+Variable,No,Run1
+Body mass,0.300771744,raw
+BMR,0.000485881,raw
+EQ,0.696782946,raw
+Abundance,0.399627522,raw
+Population density,0.63424473,raw
+Home range,0.629638101,raw
+Diet: Shannon index,0.552326234,raw
+Diet: Simpson index,0.41401389,raw
+Group size,0.352217796,raw
+Gestation length,0.633020873,raw
+Interbirth interval,0.554921161,raw
+Weaning age,0.545066315,raw
+Longevity,0.486254072,raw
+Litter size,0.366074815,raw
+Region: Afrotropic,0.044007945,raw
+Region: Indomalaya,0.095338429,raw
+Region: Nearctic,0.258170212,raw
+Region: Neotropic,0.521241256,raw
+Region: Palearctic,0.784400049,raw
+Latitude,0.385414025,raw
+Locomotion: Arboreal,0.797281096,raw
+Locomotion: Semi-aquatic,0.17055431,raw
+Locomotion: Scansorial,0.092120239,raw
+Locomotion: Semi-fossorial,0.553354418,raw
+Locomotion: Semi-arboreal,0.884674692,raw
+Locomotion: Terrestrial,0.020356463,raw
+Diet: Frugivore/Insectivore,0.777676431,raw
+Diet: Hypercarnivore,0.483541962,raw
+Diet: Insectivore,0.379334581,raw
+Diet: Piscivore,0.575409086,raw
+Diet: Mixed feeder,0.409604855,raw
+Diet: Frugivore,0.169968361,raw
+Activity: Cathemeral/Crepuscular,0.235020742,raw
+Activity: Diurnal,0.000245361,raw
+Activity: Nocturnal,0.034913675,raw
+Social complexity: Solitary,0.081799417,raw
+Social complexity: Class 1,0.539402129,raw
+Social complexity: Class 2,0.59426937,raw
+Social complexity: Class 3,0.564187274,raw
+Social complexity: Pair-living,0.75574106,raw
+Social complexity: Familial group,0.014495519,raw
+Social complexity: Extended group,0.799517829,raw
+Geographic range,0.237592255,raw
+Body mass,0.508530935,phylo1
+BMR,0.002205933,phylo1
+EQ,0.756129997,phylo1
+Abundance,0.446276129,phylo1
+Population density,0.72869282,phylo1
+Home range,0.642403566,phylo1
+Diet: Shannon index,0.603286719,phylo1
+Diet: Simpson index,0.551208128,phylo1
+Group size,0.430358285,phylo1
+Gestation length,0.501245492,phylo1
+Interbirth interval,0.422034216,phylo1
+Weaning age,0.556997504,phylo1
+Longevity,0.467761315,phylo1
+Litter size,0.41570657,phylo1
+Region: Afrotropic,0.050068069,phylo1
+Region: Indomalaya,0.152666515,phylo1
+Region: Nearctic,0.448239195,phylo1
+Region: Neotropic,0.816584532,phylo1
+Region: Palearctic,0.823033869,phylo1
+Latitude,0.781616182,phylo1
+Locomotion: Arboreal,0.794061538,phylo1
+Locomotion: Semi-aquatic,0.178328654,phylo1
+Locomotion: Scansorial,0.092544009,phylo1
+Locomotion: Semi-fossorial,0.682928247,phylo1
+Locomotion: Semi-arboreal,0.634881812,phylo1
+Locomotion: Terrestrial,0.026013524,phylo1
+Diet: Frugivore/Insectivore,0.712116555,phylo1
+Diet: Hypercarnivore,0.552645545,phylo1
+Diet: Insectivore,0.502948691,phylo1
+Diet: Piscivore,0.457484176,phylo1
+Diet: Mixed feeder,0.395964397,phylo1
+Diet: Frugivore,0.21459233,phylo1
+Activity: Cathemeral/Crepuscular,0.184125214,phylo1
+Activity: Diurnal,0.001197508,phylo1
+Activity: Nocturnal,0.064934975,phylo1
+Social complexity: Solitary,0.093610168,phylo1
+Social complexity: Class 1,0.494775221,phylo1
+Social complexity: Class 2,0.653295056,phylo1
+Social complexity: Class 3,0.623211794,phylo1
+Social complexity: Pair-living,0.582673694,phylo1
+Social complexity: Familial group,0.04616999,phylo1
+Social complexity: Extended group,0.511891005,phylo1
+Geographic range,0.244925139,phylo1
+Body mass,0.500063519,phylo2
+BMR,0.002477496,phylo2
+EQ,0.759099215,phylo2
+Abundance,0.449024257,phylo2
+Population density,0.734987902,phylo2
+Home range,0.65126134,phylo2
+Diet: Shannon index,0.620661684,phylo2
+Diet: Simpson index,0.561472402,phylo2
+Group size,0.431004204,phylo2
+Gestation length,0.51253229,phylo2
+Interbirth interval,0.432408145,phylo2
+Weaning age,0.563097934,phylo2
+Longevity,0.476579251,phylo2
+Litter size,0.425430222,phylo2
+Region: Afrotropic,0.051415099,phylo2
+Region: Indomalaya,0.158738468,phylo2
+Region: Nearctic,0.428017473,phylo2
+Region: Neotropic,0.83117908,phylo2
+Region: Palearctic,0.830914793,phylo2
+Latitude,0.766782397,phylo2
+Locomotion: Arboreal,0.802061117,phylo2
+Locomotion: Semi-aquatic,0.174860508,phylo2
+Locomotion: Scansorial,0.091112916,phylo2
+Locomotion: Semi-fossorial,0.688345607,phylo2
+Locomotion: Semi-arboreal,0.644131992,phylo2
+Locomotion: Terrestrial,0.025113396,phylo2
+Diet: Frugivore/Insectivore,0.727276849,phylo2
+Diet: Hypercarnivore,0.551848398,phylo2
+Diet: Insectivore,0.506028408,phylo2
+Diet: Piscivore,0.458055349,phylo2
+Diet: Mixed feeder,0.407468827,phylo2
+Diet: Frugivore,0.228000274,phylo2
+Activity: Cathemeral/Crepuscular,0.187985873,phylo2
+Activity: Diurnal,0.001281551,phylo2
+Activity: Nocturnal,0.06559931,phylo2
+Social complexity: Solitary,0.094095803,phylo2
+Social complexity: Class 1,0.512665229,phylo2
+Social complexity: Class 2,0.669671126,phylo2
+Social complexity: Class 3,0.624857198,phylo2
+Social complexity: Pair-living,0.576363337,phylo2
+Social complexity: Familial group,0.047422651,phylo2
+Social complexity: Extended group,0.521103156,phylo2
+Geographic range,0.254456612,phylo2
+Body mass,0.496200067,phylo3
+BMR,0.002811392,phylo3
+EQ,0.746312328,phylo3
+Abundance,0.460146545,phylo3
+Population density,0.719310334,phylo3
+Home range,0.666487677,phylo3
+Diet: Shannon index,0.619118876,phylo3
+Diet: Simpson index,0.555385279,phylo3
+Group size,0.432370201,phylo3
+Gestation length,0.508798313,phylo3
+Interbirth interval,0.420848831,phylo3
+Weaning age,0.569387771,phylo3
+Longevity,0.473087673,phylo3
+Litter size,0.415967278,phylo3
+Region: Afrotropic,0.051782617,phylo3
+Region: Indomalaya,0.158472798,phylo3
+Region: Nearctic,0.43661612,phylo3
+Region: Neotropic,0.819013897,phylo3
+Region: Palearctic,0.824185978,phylo3
+Latitude,0.75560623,phylo3
+Locomotion: Arboreal,0.799471201,phylo3
+Locomotion: Semi-aquatic,0.173857523,phylo3
+Locomotion: Scansorial,0.090367617,phylo3
+Locomotion: Semi-fossorial,0.693305214,phylo3
+Locomotion: Semi-arboreal,0.650479132,phylo3
+Locomotion: Terrestrial,0.02479072,phylo3
+Diet: Frugivore/Insectivore,0.717794643,phylo3
+Diet: Hypercarnivore,0.548771823,phylo3
+Diet: Insectivore,0.508334982,phylo3
+Diet: Piscivore,0.468435267,phylo3
+Diet: Mixed feeder,0.398794625,phylo3
+Diet: Frugivore,0.216518196,phylo3
+Activity: Cathemeral/Crepuscular,0.182098767,phylo3
+Activity: Diurnal,0.001174642,phylo3
+Activity: Nocturnal,0.063195697,phylo3
+Social complexity: Solitary,0.094151525,phylo3
+Social complexity: Class 1,0.502654287,phylo3
+Social complexity: Class 2,0.668854834,phylo3
+Social complexity: Class 3,0.631502286,phylo3
+Social complexity: Pair-living,0.580539555,phylo3
+Social complexity: Familial group,0.048860902,phylo3
+Social complexity: Extended group,0.516768947,phylo3
+Geographic range,0.254085455,phylo3
