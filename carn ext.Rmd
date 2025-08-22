@@ -96,7 +96,7 @@ data_final$simpson <- scat.species$simpson[scat.match]
 ##Camera trap abundance calc
 ```{r}
 
-register = read.delim('register.txt')
+register = read.delim('carnivore_register.txt')
 
 #Pop density approximated
 
@@ -136,7 +136,7 @@ require(BAMMtools)
 require(mulTree)
 
 
-tree <- read.nexus("Complete_phylogeny.nex") #load all 1000 trees from PHYLACINE
+tree <- read.nexus("CompletePhyCarn.nex") #load all 1000 trees from PHYLACINE
 rownames(data_final) <- data_final$species_name
 
 #clean the species not in the dataset
